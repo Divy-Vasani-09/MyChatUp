@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { userNameRegex, emailIdRegex, phoneNoRegex, passwordRegex } from './Regexes';
+import { Link } from 'react-router-dom';
 
 function registration() {
 
@@ -93,6 +94,7 @@ function registration() {
                     <input
                         type='text'
                         placeholder='Phone Number'
+                        maxLength={10}
                         name='PhoneNo'
                         value={inputValues.PhoneNo}
                         onChange={inputValueHandler}
@@ -132,9 +134,9 @@ function registration() {
                     <button type='submit' onClick={onSubmitValidation} className=' font-bold text-slate-300  bg-blue-800 hover:bg-blue-700 my-1 mx-0 p-1 px-4 rounded-lg w-[35vh]'>Submit </button>
                 </div>
 
-                <div className="container text-center text-sm">
-                    If You have account 
-                    {/* <Link to="/Login" className='text-blue-600 text-base'>Login!</Link> */}
+                <div className="container text-sm text-center">
+                    Already have an account? &nbsp;
+                    <Link to="/login" className='text-base text-blue-600 hover:underline'>Login!</Link>
                 </div>
 
             </div>
