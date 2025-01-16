@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { userNameRegex, emailIdRegex, phoneNoRegex, passwordRegex } from './Regexes';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 function registration() {
 
@@ -50,10 +51,21 @@ function registration() {
             setInputValuesErr((prev) => ({ ...prev, Password: true }))
             return
         }
-        if (inputValues.Password === inputValues.ConfirmPassword) {
+        if (inputValues.Password !== inputValues.ConfirmPassword) {
+            console.log(inputValues.Password, inputValues.ConfirmPassword)
             setInputValuesErr((prev) => ({ ...prev, ConfirmPassword: true }))
             return
         }
+
+        axios.post('http://127.0.0.1:3002/Registration', inputValues)
+            .then(result => {
+                console.log(result)
+                navigate("/login")
+            })
+            .catch(err => console.log(err))
+
+        // setInputValues(defaultInputValues);
+        // setInputValuesErr(defaultInputValuesErr)
     }
 
     return (
@@ -61,7 +73,7 @@ function registration() {
             <div className='container text-white bg-slate-900 py-9 px-0 rounded-2xl  items-center text-center shadow-slate-500 drop-shadow shadow-md '>
 
                 <div className="container">
-                    <h1 className='container mb-3 font-bold text-lg'>Registration From</h1>
+                    <h1 className='container mb-3 font-bold text-lg'>Registration Form</h1>
                 </div>
 
                 <div className="container">
