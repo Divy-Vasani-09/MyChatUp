@@ -25,6 +25,8 @@ function registration() {
     const showErrorInBorder = 'border-red-700';
     const unShowErrorInBorder = 'border-slate-950';
 
+    const navigate = useNavigate();
+
     const inputValueHandler = (e) => {
         const { name, value } = e.target;
         setInputValuesErr(defaultInputValuesErr)
@@ -64,8 +66,8 @@ function registration() {
             })
             .catch(err => console.log(err))
 
-        // setInputValues(defaultInputValues);
-        // setInputValuesErr(defaultInputValuesErr)
+        setInputValues(defaultInputValues);
+        setInputValuesErr(defaultInputValuesErr)
     }
 
     return (

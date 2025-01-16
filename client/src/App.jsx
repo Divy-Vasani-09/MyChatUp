@@ -1,6 +1,6 @@
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import Navbar from './component/Navbar';
-import Registration from './component/Registration';
+import Registration from './component/registration';
 import Login from './component/login';
 import DashBoard from './component/DashBoard';
 
