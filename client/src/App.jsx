@@ -1,7 +1,8 @@
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import Navbar from './component/Navbar';
-import Registration from './component/registration';
+import Registration from './component/Registration';
 import Login from './component/login';
+import DashBoard from './component/DashBoard';
 
 function App() {
   const router = createBrowserRouter([
@@ -11,11 +12,15 @@ function App() {
     },
     {
       path: "/Registration",
-      element: <><Navbar /><Registration /></>, // Default route
+      element: <><Navbar /><Registration /></>, 
     },
     {
       path: "/login",
       element: <><Navbar /><Login /></>, 
+    },
+    {
+      path: "/DashBoard",
+      element: <><Navbar /><DashBoard /></>, 
     },
     
   ])
