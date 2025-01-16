@@ -15,7 +15,7 @@ function App() {
       element: <><Navbar /><Registration /></>, 
     },
     {
-      path: "/login",
+      path: "/Login",
       element: <><Navbar /><Login /></>, 
     },
     {

@@ -1,27 +1,24 @@
 import React, { useState } from 'react';
 import { emailIdRegex, phoneNoRegex, passwordRegex } from './Regexes';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 function login() {
   const defaultInputValues = {
-    UserName: '',
-    EmailID: '',
-    PhoneNo: '',
-    Password: '',
-    ConfirmPassword: ''
+    EmailIDOrPhoneNo: '',
+    Password: ''
   }
   const defaultInputValuesErr = {
-    UserName: false,
-    EmailID: false,
-    PhoneNo: false,
-    Password: false,
-    ConfirmPassword: false
+    EmailIDOrPhoneNo: false,
+    Password: false
   }
 
   const [inputValues, setInputValues] = useState(defaultInputValues);
   const [inputValuesErr, setInputValuesErr] = useState(defaultInputValuesErr)
   const showErrorInBorder = 'border-red-700';
   const unShowErrorInBorder = 'border-slate-950';
+
+  const navigate = useNavigate();
 
   const inputValueHandler = (e) => {
     const { name, value } = e.target;
@@ -33,18 +30,31 @@ function login() {
   }
 
   const onSubmitValidation = () => {
-    if (!emailIdRegex.test(inputValues.EmailID)) {
-      setInputValuesErr((prev) => ({ ...prev, EmailID: true }))
+    if (!emailIdRegex.test(inputValues.EmailIDOrPhoneNo) && !phoneNoRegex.test(inputValues.EmailIDOrPhoneNo)) {
+      setInputValuesErr((prev) => ({ ...prev, EmailIDOrPhoneNo: true }))
+      console.log("hi")
       return
     }
-    if (!phoneNoRegex.test(inputValues.PhoneNo)) {
-      setInputValuesErr((prev) => ({ ...prev, PhoneNo: true }))
-      return
-    }
-    if (!passwordRegex.test(inputValues.Password)) {
-      setInputValuesErr((prev) => ({ ...prev, Password: true }))
-      return
-    }
+
+    axios.post('http://127.0.0.1:3002/Login', inputValues)
+      .then(result => {
+        console.log(result)
+        if(result.data === "No record existed"){
+          setInputValuesErr((prev) => ({ ...prev, EmailIDOrPhoneNo: true }))
+          return
+        }
+        if (result.data === "Password is incorrect!") {
+          setInputValuesErr((prev) => ({ ...prev, Password: true }))
+          return
+        }
+        if (result.data === "Success") {
+          // navigate("/DashBoard")
+        }
+      })
+      .catch(err => {
+        console.log(err)
+
+      })
   }
   return (
     <div className='container center flex flex-col  mx-auto mt-9  w-1/2'>
@@ -56,29 +66,15 @@ function login() {
 
         <div className="container">
           <input
-            type='email'
-            placeholder='Email ID'
-            name='EmailID'
-            value={inputValues.EmailID}
-            onChange={inputValueHandler}
-            className={` font-normal text-base bg-slate-950 my-2 mx-0 py-1 px-2 rounded-lg w-1/2 drop-shadow shadow-sm hover:shadow-slate-300 border-2 border-solid ${inputValuesErr.EmailID === true ? showErrorInBorder : unShowErrorInBorder}`}
-          >
-          </input>
-          {inputValuesErr.EmailID === true && <p className='text-red-600'>{inputValues.EmailID === '' ? 'Enter Your Email ID' : 'Your Email ID is InValid'}</p>}
-        </div>
-
-        <div className="container">
-          <input
             type='text'
-            placeholder='Phone Number'
-            maxLength={10}
-            name='PhoneNo'
-            value={inputValues.PhoneNo}
+            placeholder='Email ID or Phone Number'
+            name='EmailIDOrPhoneNo'
+            value={inputValues.EmailIDOrPhoneNo}
             onChange={inputValueHandler}
-            className={` font-normal text-base bg-slate-950 my-2 mx-0 py-1 px-2 rounded-lg w-1/2 drop-shadow shadow-sm hover:shadow-slate-300 border-2 border-solid ${inputValuesErr.PhoneNo === true ? showErrorInBorder : unShowErrorInBorder}`}
+            className={` font-normal text-base bg-slate-950 my-2 mx-0 py-1 px-2 rounded-lg w-1/2 drop-shadow shadow-sm hover:shadow-slate-300 border-2 border-solid ${inputValuesErr.EmailIDOrPhoneNo=== true ? showErrorInBorder : unShowErrorInBorder}`}
           >
           </input>
-          {inputValuesErr.PhoneNo === true && <p className='text-red-600'>{inputValues.PhoneNo === '' ? 'Enter Your Phone Number' : 'Your Phone Number is InVaild'}</p>}
+          {inputValuesErr.EmailIDOrPhoneNo=== true && <p className='text-red-600'>{inputValues.EmailIDOrPhoneNo=== '' ? 'Enter Your Email ID' : 'Your Email ID is InValid'}</p>}
         </div>
 
         <div className="container">
@@ -91,7 +87,7 @@ function login() {
             className={` font-normal text-base bg-slate-950 my-2 mx-0 py-1 px-2 rounded-lg w-1/2 drop-shadow shadow-sm hover:shadow-slate-300 border-2 border-solid ${inputValuesErr.Password === true ? showErrorInBorder : unShowErrorInBorder}`}
           >
           </input>
-          {inputValuesErr.Password === true && <p className='text-red-600'>Enter at least one UpperCase, LowerCase, Digit and any Symbol</p>}
+          {inputValuesErr.Password === true && <p className='text-red-600'>Wrong Password</p>}
         </div>
 
         <div className='text-center items-center m-3 mb-2'>

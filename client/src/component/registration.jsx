@@ -62,7 +62,7 @@ function registration() {
         axios.post('http://127.0.0.1:3002/Registration', inputValues)
             .then(result => {
                 console.log(result)
-                navigate("/login")
+                navigate("/Login")
             })
             .catch(err => console.log(err))
 
@@ -150,7 +150,7 @@ function registration() {
 
                 <div className="container text-sm text-center">
                     Already have an account? &nbsp;
-                    <Link to="/login" className='text-base text-blue-600 hover:underline'>Login!</Link>
+                    <Link to="/Login" className='text-base text-blue-600 hover:underline'>Login!</Link>
                 </div>
 
             </div>
