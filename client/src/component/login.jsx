@@ -32,28 +32,26 @@ function login() {
   const onSubmitValidation = () => {
     if (!emailIdRegex.test(inputValues.EmailIDOrPhoneNo) && !phoneNoRegex.test(inputValues.EmailIDOrPhoneNo)) {
       setInputValuesErr((prev) => ({ ...prev, EmailIDOrPhoneNo: true }))
-      console.log("hi")
       return
     }
 
     axios.post('http://127.0.0.1:3002/Login', inputValues)
       .then(result => {
         console.log(result)
-        if(result.data === "No record existed"){
-          setInputValuesErr((prev) => ({ ...prev, EmailIDOrPhoneNo: true }))
-          return
-        }
-        if (result.data === "Password is incorrect!") {
-          setInputValuesErr((prev) => ({ ...prev, Password: true }))
-          return
-        }
         if (result.data === "Success") {
           // navigate("/DashBoard")
         }
       })
       .catch(err => {
         console.log(err)
-
+        if(err.response.data === "No record existed"){
+          // setInputValuesErr((prev) => ({ ...prev, EmailIDOrPhoneNo: true }))
+          return
+        }
+        if (err.response.data === "Password is incorrect!") {
+          setInputValuesErr((prev) => ({ ...prev, Password: true }))
+          return
+        }
       })
   }
   return (
@@ -95,7 +93,7 @@ function login() {
         </div>
 
         <div className="container text-base text-center mb-1">
-          <Link to="/Registration" className='text-base text-blue-600 hover:underline'>Forgot Password?</Link>
+          <Link to="/ForgotPassword" className='text-base text-blue-600 hover:underline'>Forgot Password?</Link>
         </div>
 
         <div className="container text-sm text-center">

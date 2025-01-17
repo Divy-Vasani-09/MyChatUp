@@ -2,6 +2,7 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import Navbar from './component/Navbar';
 import Registration from './component/registration';
 import Login from './component/login';
+import ForgotPassword from './component/ForgotPassword';
 import DashBoard from './component/DashBoard';
 
 function App() {
@@ -17,6 +18,10 @@ function App() {
     {
       path: "/Login",
       element: <><Navbar /><Login /></>, 
+    },
+    {
+      path: "/ForgotPassword",
+      element: <><Navbar /><ForgotPassword /></>, 
     },
     {
       path: "/DashBoard",
