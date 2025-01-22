@@ -60,7 +60,7 @@ function login() {
   }
   return (
     <div className='container center flex flex-col  mx-auto mt-9  w-2/6'>
-      <div className='container text-white bg-slate-900 py-9 px-0 rounded-2xl  items-center text-center shadow-slate-500 drop-shadow shadow-md '>
+      <div className='container  items-center text-center text-white bg-slate-900 py-9 px-0 rounded-2xl shadow-slate-500 drop-shadow shadow-md '>
 
         <div className="container">
           <h1 className='container mb-3 font-bold text-lg'>Login From</h1>

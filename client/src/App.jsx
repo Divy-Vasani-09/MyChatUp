@@ -1,3 +1,4 @@
+import React from 'react';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import Navbar from './component/Navbar';
 import Registration from './component/registration';
@@ -13,25 +14,27 @@ function App() {
     },
     {
       path: "/Registration",
-      element: <><Navbar /><Registration /></>, 
+      element: <><Navbar /><Registration /></>,
     },
     {
       path: "/Login",
-      element: <><Navbar /><Login /></>, 
+      element: <><Navbar /><Login /></>,
     },
     {
       path: "/ForgotPassword",
-      element: <><Navbar /><ForgotPassword /></>, 
+      element: <><Navbar /><ForgotPassword /></>,
     },
     {
       path: "/DashBoard",
-      element: <><Navbar /><DashBoard /></>, 
+      element: <><Navbar /><DashBoard /></>,
     },
-    
+
   ])
   return (
     <>
-      <RouterProvider router={router} />
+      <React.StrictMode>
+        <RouterProvider router={router} />
+      </React.StrictMode>
     </>
   )
 }
