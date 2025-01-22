@@ -17,6 +17,7 @@ function login() {
   const [inputValuesErr, setInputValuesErr] = useState(defaultInputValuesErr)
   const showErrorInBorder = 'border-red-700';
   const unShowErrorInBorder = 'border-slate-950';
+  const [errorMessage, setErrorMessage] = useState('');
 
   const navigate = useNavigate();
 
@@ -39,23 +40,26 @@ function login() {
       .then(result => {
         console.log(result)
         if (result.data === "Success") {
-          // navigate("/DashBoard")
+          navigate("/DashBoard")
         }
       })
       .catch(err => {
-        console.log(err)
-        if(err.response.data === "No record existed"){
-          // setInputValuesErr((prev) => ({ ...prev, EmailIDOrPhoneNo: true }))
+        console.log(err);
+        const errMessage = err.response.data.message
+        setErrorMessage(errMessage)
+        if(errMessage === "No record existed"){
+          setInputValuesErr((prev) => ({ ...prev, EmailIDOrPhoneNo: true }))
+          console.log("hi")
           return
         }
-        if (err.response.data === "Password is incorrect!") {
+        if (errMessage === "Password is incorrect!") {
           setInputValuesErr((prev) => ({ ...prev, Password: true }))
           return
         }
       })
   }
   return (
-    <div className='container center flex flex-col  mx-auto mt-9  w-1/2'>
+    <div className='container center flex flex-col  mx-auto mt-9  w-2/6'>
       <div className='container text-white bg-slate-900 py-9 px-0 rounded-2xl  items-center text-center shadow-slate-500 drop-shadow shadow-md '>
 
         <div className="container">
@@ -69,10 +73,10 @@ function login() {
             name='EmailIDOrPhoneNo'
             value={inputValues.EmailIDOrPhoneNo}
             onChange={inputValueHandler}
-            className={` font-normal text-base bg-slate-950 my-2 mx-0 py-1 px-2 rounded-lg w-1/2 drop-shadow shadow-sm hover:shadow-slate-300 border-2 border-solid ${inputValuesErr.EmailIDOrPhoneNo=== true ? showErrorInBorder : unShowErrorInBorder}`}
+            className={` font-normal text-base bg-slate-950 my-2 mx-0 py-1 px-2 rounded-lg w-4/6 drop-shadow shadow-sm hover:shadow-slate-300 border-2 border-solid ${inputValuesErr.EmailIDOrPhoneNo=== true ? showErrorInBorder : unShowErrorInBorder}`}
           >
           </input>
-          {inputValuesErr.EmailIDOrPhoneNo=== true && <p className='text-red-600'>{inputValues.EmailIDOrPhoneNo=== '' ? 'Enter Your Email ID' : 'Your Email ID is InValid'}</p>}
+          {inputValuesErr.EmailIDOrPhoneNo=== true && <p className='text-red-600'>{inputValues.EmailIDOrPhoneNo=== '' ? 'Enter Your Email ID' : errorMessage !== '' ? errorMessage : 'Your Email ID is InValid'}</p>}
         </div>
 
         <div className="container">
@@ -82,10 +86,10 @@ function login() {
             name='Password'
             value={inputValues.Password}
             onChange={inputValueHandler}
-            className={` font-normal text-base bg-slate-950 my-2 mx-0 py-1 px-2 rounded-lg w-1/2 drop-shadow shadow-sm hover:shadow-slate-300 border-2 border-solid ${inputValuesErr.Password === true ? showErrorInBorder : unShowErrorInBorder}`}
+            className={` font-normal text-base bg-slate-950 my-2 mx-0 py-1 px-2 rounded-lg w-4/6 drop-shadow shadow-sm hover:shadow-slate-300 border-2 border-solid ${inputValuesErr.Password === true ? showErrorInBorder : unShowErrorInBorder}`}
           >
           </input>
-          {inputValuesErr.Password === true && <p className='text-red-600'>Wrong Password</p>}
+          {inputValuesErr.Password === true && <p className='text-red-600'>{inputValues.Password === '' ? 'Enter a Password': errorMessage}</p>}
         </div>
 
         <div className='text-center items-center m-3 mb-2'>
