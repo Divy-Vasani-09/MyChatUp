@@ -16,9 +16,9 @@ export default function Navbar() {
         </header>
 
         <ul className="flex gap-8 mx-9 my-1">
-          <NavLink className={(e) => { return e.isActive ? "font-bold pb-1 border-b-2 duration-100" : "" }} to="/DashBoard">
+          {/* <NavLink className={(e) => { return e.isActive ? "font-bold pb-1 border-b-2 duration-100" : "" }} to="/DashBoard">
             <li className='curser-pointer hover:font-bold transition-none duration-100'>Home</li>
-          </NavLink>
+          </NavLink> */}
           <NavLink className={(e) => { return e.isActive ? "font-bold pb-1 border-b-2 duration-100" : "" }} to="/Login">
             <li className='curser-pointer hover:font-bold transition-none duration-100'>Login</li>
           </NavLink>
