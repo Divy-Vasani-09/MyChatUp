@@ -1,6 +1,6 @@
 import React from 'react'
 import SideBar from './DashBoardComponent/SideBar'
-import Contact from './DashBoardComponent/Contact'
+import { Outlet } from 'react-router-dom'
 
 export default function DashBoard() {
   return (
@@ -10,7 +10,7 @@ export default function DashBoard() {
           <SideBar />
         </div>
         <div className="container w-5/6 mx-2 bg-blue-950">
-          <Contact />
+          <Outlet />
         </div>
       </div>
       <div className="container w-3/4 bg-slate-900">Chat</div>
