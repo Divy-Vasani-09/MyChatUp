@@ -39,8 +39,11 @@ function login() {
     axios.post('http://127.0.0.1:3002/Login', inputValues)
       .then(result => {
         console.log(result)
-        if (result.data === "Success") {
-          navigate("/DashBoard")
+        if (result.data.success) {
+          const userData = JSON.stringify(result.data.user)
+          sessionStorage.setItem("userLoggedData", userData)
+          // sessionStorage.setItem("isUserLogged", false);
+          navigate("/DashBoard/contact")
         }
       })
       .catch(err => {
@@ -102,7 +105,7 @@ function login() {
 
         <div className="container text-sm text-center">
           Don't have an account? &nbsp;
-          <Link to="/Registration" className='text-base text-blue-600 hover:underline'>SignUp!</Link>
+          <Link to="/registration" className='text-base text-blue-600 hover:underline'>SignUp!</Link>
         </div>
 
       </div>
