@@ -1,24 +1,16 @@
-import React, { useState } from 'react'
+import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
+import SearchBarNewChat from './SearchBarNewChat'
 import UserIcon from 'C:/Users/Destiny/OneDrive/Desktop/MyChatUp/client/src/assets/profile.png'
-import { NavLink } from 'react-router-dom'
+
 
 function Contact() {
     const [newChat, setNewChat] = useState(false);
+    const [searchResults, setSearchResults] = useState([])
 
     const newChatHandler = () => {
         setNewChat(true)
     }
-    const searchHandler = () => {
-
-    }
-    const topFiveMatched = (e) => {
-        const { name, value } = e.target;
-        setInputValues({
-            ...inputValues,
-            [name]: value
-        });
-        const optionS = document.getElementById('optionS').value;
-    };
 
     return (
         <div className="container mx-auto mt-2 h-[5.4in] ">
@@ -33,29 +25,16 @@ function Contact() {
                         newChat
                             ?
                             <>
-                                <input
-                                    type='text'
-                                    placeholder='Search'
-                                    name='Search'
-                                    // value={inputValues.EmailIDOrPhoneNo}
-                                    onChange={searchHandler}
-                                    className="absolute right-0 font-normal text-slate-100 text-base bg-slate-950 my-2 mx-0 py-1 px-2 rounded-lg rounded-b-sm w-full drop-shadow shadow-md hover:shadow-blue-600 duration-150 "
-                                >
-                                </input>
-                                <select
-                                    required
-                                    name='topFiveMatched'
-                                    value=""
-                                    // onChange={handleChange}
-                                    className="text-base font-normal text-slate-400 my-2 mx-0 py-1 px-2 mt-10 w-full border-none rounded-lg rounded-t-sm bg-slate-950 cursor-pointer"
-                                >
-                                    <option value="" disabled hidden>Please Choose </option>
-                                    <option value="India">India</option>
-                                    <option value="USA">USA</option>
-                                    <option value="China">China</option>
-                                    <option value="Canada">Canada</option>
-                                    <option value="UK">UK</option>
-                                </select>
+                                <SearchBarNewChat setSearchResults={setSearchResults} />
+                                <div className="container">
+                                    <div className="container result-List absolute top-12 flex flex-col items-center bg-blue-900 opacity-95 w-full max-h-44 mr-12 rounded-lg drop-shadow shadow-md">
+                                        {
+                                            searchResults.slice(0, 5).map((result, id) => {
+                                                return <Link  key={id} className="text-sm my-1 border-b-2 border-slate-400 rounded-full w-11/12 hover:bg-blue-800 hover:opacity-95">{result.UserName }&nbsp; { result.PhoneNo}</Link>
+                                            })
+                                        }
+                                    </div>
+                                </div>
                             </>
                             :
                             <>
