@@ -1,5 +1,9 @@
 import React, { useState } from 'react';
 import { emailIdRegex, phoneNoRegex, passwordRegex } from './Regexes';
+import { CiMail } from "react-icons/ci";
+import { CiLock } from "react-icons/ci";
+import { IoMdEyeOff } from "react-icons/io";
+import { IoEye } from "react-icons/io5";
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
@@ -19,6 +23,7 @@ function ForgotPassword() {
     const [inputValuesErr, setInputValuesErr] = useState(defaultInputValuesErr)
     const showErrorInBorder = 'border-red-700';
     const unShowErrorInBorder = 'border-slate-950';
+    const [passwordVisibility, setPasswordVisibility] = useState(false);
     const [errorMessage, setErrorMessage] = useState('')
 
     const navigate = useNavigate();
@@ -31,6 +36,10 @@ function ForgotPassword() {
             ...inputValues,
             [name]: value
         })
+    }
+
+    const passwordVisibilityHandler = () => {
+        { passwordVisibility ? setPasswordVisibility(false) : setPasswordVisibility(true) }
     }
 
     const onSubmitValidation = () => {
@@ -69,7 +78,7 @@ function ForgotPassword() {
             })
     }
     return (
-        <div className='container center flex flex-col  mx-auto mt-9  w-1/2'>
+        <div className='container center flex flex-col  mx-auto mt-9  w-2/6'>
             <div className='container text-white bg-slate-900 py-9 px-0 rounded-2xl  items-center text-center shadow-slate-500 drop-shadow shadow-md '>
 
                 <div className="container">
@@ -77,42 +86,63 @@ function ForgotPassword() {
                 </div>
 
                 <div className="container EmailID-PhoneNo my-2">
-                    <input
-                        type='text'
-                        placeholder='Email ID or Phone Number'
-                        name='EmailIDOrPhoneNo'
-                        value={inputValues.EmailIDOrPhoneNo}
-                        onChange={inputValueHandler}
-                        className={` font-normal text-base bg-slate-950  mx-0 py-1 px-2 rounded-lg w-1/2 drop-shadow shadow-sm hover:shadow-slate-300 border-2 border-solid ${inputValuesErr.EmailIDOrPhoneNo === true ? showErrorInBorder : unShowErrorInBorder}`}
-                    >
-                    </input>
+                    <div className={`flex w-4/6 bg-slate-950 my-2 mx-auto rounded-lg  drop-shadow shadow-sm hover:shadow-slate-300 border-2 border-solid ${inputValuesErr.EmailIDOrPhoneNo === true ? showErrorInBorder : unShowErrorInBorder}`}>
+                        <div className=' border-r w-1/12 items-center my-auto ml-1'>
+                            <CiMail />
+                        </div>
+                        <input
+                            type='text'
+                            placeholder='Email ID or Phone Number'
+                            name='EmailIDOrPhoneNo'
+                            value={inputValues.EmailIDOrPhoneNo}
+                            onChange={inputValueHandler}
+                            className={` font-normal text-base bg-slate-950 py-1 px-2 rounded-lg w-11/12 outline-none `}
+                        >
+                        </input>
+                    </div>
                     {inputValuesErr.EmailIDOrPhoneNo === true && <p className='text-red-600'>{inputValues.EmailIDOrPhoneNo === '' ? 'Enter Your Email ID or Phone No.' : errorMessage !== '' ? errorMessage : 'InValid Email Id'}</p>}
                 </div>
 
-                <div className="container Password my-2">
-                    <input
-                        type='text'
-                        placeholder='Password'
-                        name='Password'
-                        value={inputValues.Password}
-                        onChange={inputValueHandler}
-                        className={` font-normal text-base bg-slate-950 mx-0 py-1 px-2 rounded-lg w-1/2 drop-shadow shadow-sm hover:shadow-slate-300 border-2 border-solid ${inputValuesErr.Password === true ? showErrorInBorder : unShowErrorInBorder}`}
-                    >
-                    </input>
+                <div className="container Password">
+                    <div className={`flex w-4/6 bg-slate-950 my-2 mx-auto rounded-lg  drop-shadow shadow-sm hover:shadow-slate-300 border-2 border-solid ${inputValuesErr.Password === true ? showErrorInBorder : unShowErrorInBorder}`}>
+                        <div className='border-r w-1/12 items-center my-auto ml-1' >
+                            <CiLock />
+                        </div>
+                        <div className='w-10/12 '>
+                            <input
+                                type={passwordVisibility ? 'text' : 'password'}
+                                maxLength={16}
+                                placeholder='Password'
+                                name='Password'
+                                value={inputValues.Password}
+                                onChange={inputValueHandler}
+                                className={` font-normal text-base text-left bg-slate-950 py-1 px-2 rounded-lg outline-none w-full`}
+                            >
+                            </input>
+                        </div>
+                        <div className='cursor-pointer w-1/12 items-center my-auto mx-auto' onClick={passwordVisibilityHandler}>
+                            {passwordVisibility ? <IoMdEyeOff /> : <IoEye />}
+                        </div>
+                    </div>
                     {inputValuesErr.Password === true && <p className='text-red-600'>{errorMessage !== '' ? errorMessage : 'Enter at least one UpperCase, LowerCase, Digit and any Symbol'}</p>}
-
                 </div>
 
                 <div className="container Confirm-Password my-2">
-                    <input
-                        type='text'
-                        placeholder='Confirm Password'
-                        name='ConfirmPassword'
-                        value={inputValues.ConfirmPassword}
-                        onChange={inputValueHandler}
-                        className={` font-normal text-base bg-slate-950 mx-0 py-1 px-2 rounded-lg w-1/2 drop-shadow shadow-sm hover:shadow-slate-300 border-2 border-solid ${inputValuesErr.ConfirmPassword === true ? showErrorInBorder : unShowErrorInBorder}`}
-                    >
-                    </input>
+                    <div className={`flex w-4/6 bg-slate-950 my-2 mx-auto rounded-lg  drop-shadow shadow-sm hover:shadow-slate-300 border-2 border-solid ${inputValuesErr.ConfirmPassword === true ? showErrorInBorder : unShowErrorInBorder}`}>
+                        <div className='text-slate-300 border-r w-1/12 items-center my-auto ml-1'>
+                            <TbLockPassword />
+                        </div>
+                        <input
+                            type={passwordVisibility ? 'text' : 'password'}
+                            maxLength={16}
+                            placeholder='Confirm Password'
+                            name='ConfirmPassword'
+                            value={inputValues.ConfirmPassword}
+                            onChange={inputValueHandler}
+                            className={` font-normal text-base bg-slate-950 py-1 px-2 rounded-lg w-11/12 outline-none`}
+                        >
+                        </input>
+                    </div>
                     {inputValuesErr.ConfirmPassword === true && <p className='text-red-600'>Enter Same Password</p>}
                 </div>
 
@@ -121,7 +151,7 @@ function ForgotPassword() {
                 </div>
 
                 <div className="container text-base text-center mb-1">
-                    <Link to="/Login" className='text-base text-blue-600 hover:underline'>Go Back?</Link>
+                    <Link to="/Login" className=' text-base text-blue-600 hover:underline'>Go Back?</Link>
                 </div>
 
             </div>

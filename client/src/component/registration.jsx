@@ -1,5 +1,12 @@
 import React, { useState } from 'react';
 import { userNameRegex, emailIdRegex, phoneNoRegex, passwordRegex } from './Regexes';
+import { CiUser } from "react-icons/ci";
+import { CiMail } from "react-icons/ci";
+import { FiPhone } from "react-icons/fi";
+import { CiLock } from "react-icons/ci";
+import { IoMdEyeOff } from "react-icons/io";
+import { IoEye } from "react-icons/io5";
+import { TbLockPassword } from "react-icons/tb";
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
@@ -24,6 +31,7 @@ function registration() {
     const [inputValuesErr, setInputValuesErr] = useState(defaultInputValuesErr)
     const showErrorInBorder = 'border-red-700';
     const unShowErrorInBorder = 'border-slate-950';
+    const [passwordVisibility, setPasswordVisibility] = useState(false);
 
     const navigate = useNavigate();
 
@@ -34,6 +42,10 @@ function registration() {
             ...inputValues,
             [name]: value
         })
+    }
+
+    const passwordVisibilityHandler = () => {
+        { passwordVisibility ? setPasswordVisibility(false) : setPasswordVisibility(true) }
     }
 
     const onSubmitValidation = () => {
@@ -79,68 +91,100 @@ function registration() {
                 </div>
 
                 <div className="container">
-                    <input
-                        type='text'
-                        placeholder='User Name'
-                        name='UserName'
-                        value={inputValues.UserName}
-                        onChange={inputValueHandler}
-                        className={` font-normal text-base bg-slate-950 my-2 mx-0 py-1 px-2 rounded-lg w-4/6 drop-shadow shadow-sm hover:shadow-slate-300 border-2 border-solid ${inputValuesErr.UserName === true ? showErrorInBorder : unShowErrorInBorder}`}
-                    >
-                    </input>
+                    <div className={`flex w-4/6 bg-slate-950 my-2 mx-auto rounded-lg  drop-shadow shadow-sm hover:shadow-slate-300 border-2 border-solid ${inputValuesErr.UserName === true ? showErrorInBorder : unShowErrorInBorder}`}>
+                        <div className=' border-r w-1/12 items-center my-auto ml-1'>
+                            <CiUser />
+                        </div>
+                        <input
+                            type='text'
+                            maxLength={10}
+                            placeholder='User Name'
+                            name='UserName'
+                            value={inputValues.UserName}
+                            onChange={inputValueHandler}
+                            className={` font-normal text-base bg-slate-950 py-1 px-2 rounded-lg w-11/12 outline-none`}
+                        >
+                        </input>
+                    </div>
                     {inputValuesErr.UserName === true && <p className='text-red-600'>{inputValues.UserName === '' ? 'Enter Your User Name' : 'Your UserName is inValid'}</p>}
                 </div>
 
                 <div className="container">
-                    <input
-                        type='email'
-                        placeholder='Email ID'
-                        name='EmailID'
-                        value={inputValues.EmailID}
-                        onChange={inputValueHandler}
-                        className={` font-normal text-base bg-slate-950 my-2 mx-0 py-1 px-2 rounded-lg w-4/6 drop-shadow shadow-sm hover:shadow-slate-300 border-2 border-solid ${inputValuesErr.EmailID === true ? showErrorInBorder : unShowErrorInBorder}`}
-                    >
-                    </input>
+                    <div className={`flex w-4/6 bg-slate-950 my-2 mx-auto rounded-lg  drop-shadow shadow-sm hover:shadow-slate-300 border-2 border-solid ${inputValuesErr.EmailID === true ? showErrorInBorder : unShowErrorInBorder}`}>
+                        <div className=' border-r w-1/12 items-center my-auto ml-1'>
+                            <CiMail />
+                        </div>
+                        <input
+                            type='email'
+                            placeholder='Email ID'
+                            name='EmailID'
+                            value={inputValues.EmailID}
+                            onChange={inputValueHandler}
+                            className='font-normal text-base bg-slate-950 py-1 px-2 rounded-lg w-11/12 outline-none'
+                        >
+                        </input>
+                    </div>
                     {inputValuesErr.EmailID === true && <p className='text-red-600'>{inputValues.EmailID === '' ? 'Enter Your Email ID' : 'Your Email ID is InValid'}</p>}
                 </div>
 
                 <div className="container">
-                    <input
-                        type='text'
-                        placeholder='Phone Number'
-                        maxLength={10}
-                        name='PhoneNo'
-                        value={inputValues.PhoneNo}
-                        onChange={inputValueHandler}
-                        className={` font-normal text-base bg-slate-950 my-2 mx-0 py-1 px-2 rounded-lg w-4/6 drop-shadow shadow-sm hover:shadow-slate-300 border-2 border-solid ${inputValuesErr.PhoneNo === true ? showErrorInBorder : unShowErrorInBorder}`}
-                    >
-                    </input>
+                    <div className={`flex w-4/6 bg-slate-950 my-2 mx-auto rounded-lg  drop-shadow shadow-sm hover:shadow-slate-300 border-2 border-solid ${inputValuesErr.PhoneNo === true ? showErrorInBorder : unShowErrorInBorder}`}>
+                        <div className='text-slate-300 border-r w-1/12 items-center my-auto ml-1'>
+                            <FiPhone />
+                        </div>
+                        <input
+                            type='text'
+                            maxLength={10}
+                            placeholder='Phone Number'
+                            name='PhoneNo'
+                            value={inputValues.PhoneNo}
+                            onChange={inputValueHandler}
+                            className={` font-normal text-base bg-slate-950 py-1 px-2 rounded-lg w-11/12 outline-none`}
+                        >
+                        </input>
+                    </div>
                     {inputValuesErr.PhoneNo === true && <p className='text-red-600'>{inputValues.PhoneNo === '' ? 'Enter Your Phone Number' : 'Your Phone Number is InVaild'}</p>}
                 </div>
 
                 <div className="container">
-                    <input
-                        type='text'
-                        placeholder='Password'
-                        name='Password'
-                        value={inputValues.Password}
-                        onChange={inputValueHandler}
-                        className={` font-normal text-base bg-slate-950 my-2 mx-0 py-1 px-2 rounded-lg w-4/6 drop-shadow shadow-sm hover:shadow-slate-300 border-2 border-solid ${inputValuesErr.Password === true ? showErrorInBorder : unShowErrorInBorder}`}
-                    >
-                    </input>
+                    <div className={`flex w-4/6 bg-slate-950 my-2 mx-auto rounded-lg  drop-shadow shadow-sm hover:shadow-slate-300 border-2 border-solid ${inputValuesErr.Password === true ? showErrorInBorder : unShowErrorInBorder}`}>
+                        <div className='border-r w-1/12 items-center my-auto ml-1' onClick={passwordVisibilityHandler}>
+                            <CiLock />
+                        </div>
+                        <div className='w-10/12 '>
+                            <input
+                                type={passwordVisibility ? 'text' : 'password'}
+                                placeholder='Password'
+                                name='Password'
+                                value={inputValues.Password}
+                                onChange={inputValueHandler}
+                                className={` font-normal text-base text-left bg-slate-950  py-1 px-2 rounded-lg outline-none w-full`}
+                            >
+                            </input>
+                        </div>
+                        <div className='cursor-pointer w-1/12 items-center my-auto mx-auto' onClick={passwordVisibilityHandler}>
+                            {passwordVisibility ? <IoMdEyeOff /> : <IoEye />}
+                        </div>
+                    </div>
                     {inputValuesErr.Password === true && <p className='text-red-600'>Enter at least one UpperCase, LowerCase, Digit and any Symbol</p>}
                 </div>
 
                 <div className="container">
-                    <input
-                        type='text'
-                        placeholder='Confirm Password'
-                        name='ConfirmPassword'
-                        value={inputValues.ConfirmPassword}
-                        onChange={inputValueHandler}
-                        className={` font-normal text-base bg-slate-950 my-2 mx-0 py-1 px-2 rounded-lg w-4/6 drop-shadow shadow-sm hover:shadow-slate-300 border-2 border-solid ${inputValuesErr.ConfirmPassword === true ? showErrorInBorder : unShowErrorInBorder}`}
-                    >
-                    </input>
+                    <div className={`flex w-4/6 bg-slate-950 my-2 mx-auto rounded-lg  drop-shadow shadow-sm hover:shadow-slate-300 border-2 border-solid ${inputValuesErr.ConfirmPassword === true ? showErrorInBorder : unShowErrorInBorder}`}>
+                        <div className='text-slate-300 border-r w-1/12 items-center my-auto ml-1'>
+                            <TbLockPassword />
+                        </div>
+                        <input
+                            type={passwordVisibility ? 'text' : 'password'}
+                            maxLength={16}
+                            placeholder='Confirm Password'
+                            name='ConfirmPassword'
+                            value={inputValues.ConfirmPassword}
+                            onChange={inputValueHandler}
+                            className={` font-normal text-base bg-slate-950 py-1 px-2 rounded-lg w-11/12 outline-none`}
+                        >
+                        </input>
+                    </div>
                     {inputValuesErr.ConfirmPassword === true && <p className='text-red-600'>Enter Same Password</p>}
                 </div>
 
