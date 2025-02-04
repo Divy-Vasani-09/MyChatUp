@@ -35,8 +35,12 @@ app.post('/Login', (req, res) => {
                     message: "Password is incorrect!"
                 });
             }
-            const userData = user;
-            console.log(user)
+            const userData = {
+                _id: user._id,
+                UserName: user.UserName,
+                PhoneNo: user.PhoneNo,
+                EmailID: user.EmailID,
+            };
             res.status(200).send({
                 success: true,
                 user: userData
@@ -59,6 +63,63 @@ app.post('/ForgotPassword', (req, res) => {
                 { $set: { Password: Password } }
             )
                 .then(() => res.json("Success"))
+        })
+})
+
+app.post('/editProfile', (req, res) => {
+    const { UserName, EmailID, PhoneNo, _id } = req.body;
+    userRegisterModel.updateOne(
+        { _id: _id },
+        { $set: { UserName: UserName, PhoneNo: PhoneNo, EmailID: EmailID } }
+    ).then(result => {
+        if (result.modifiedCount === 0) {
+            console.log("No document updated. Check if the _id exists.");
+        }
+        else {
+            console.log("User updated successfully.");
+
+            userRegisterModel.findOne({ _id: _id })
+                .then(user => {
+                    if (!user) {
+                        return res.status(404).send({
+                            error: 404,
+                            message: "No record existed"
+                        });
+                    }
+                    const userData = {
+                        _id: user._id,
+                        UserName: user.UserName,
+                        PhoneNo: user.PhoneNo,
+                        EmailID: user.EmailID,
+                    };
+                    res.status(200).send({
+                        success: true,
+                        user: userData
+                    });
+                })
+        }
+
+    })
+
+})
+
+app.get('/SearchBarNewChat', (req, res) => {
+    const { input } = req.query;
+    const regex = new RegExp(input, 'i');
+    if (!input) {
+        return res.status(400).send({
+            success: false,
+            message: "Input is required",
+        });
+    }
+    userRegisterModel.find({ $or: [{ UserName: { $regex: regex } }, { PhoneNo: { $regex: regex } }] }, { _id: 0, Password: 0 })
+        .then(user => {
+            if (!user) {
+                return res.status(404).send("No record existed");
+            }
+            res.status(200).json({
+                user
+            });
         })
 })
 
