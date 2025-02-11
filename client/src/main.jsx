@@ -5,7 +5,7 @@ import App from './App.jsx'
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import Navbar from './component/Navbar';
 import Welcome from './Welcome.jsx';
-import Registration from './component/registration';
+import Registration from './component/Registration.jsx';
 import Login from './component/login';
 import ForgotPassword from './component/ForgotPassword';
 import DashBoard from './component/DashBoard';
@@ -14,6 +14,8 @@ import Call from './component/DashBoardComponent/Call.jsx';
 import Setting from './component/DashBoardComponent/Setting.jsx';
 import Profile from './component/DashBoardComponent/Profile';
 import EditProfile from './component/DashBoardComponent/EditProfile.jsx';
+import ChatBox from './component/DashBoardComponent/ChatComponents/ChatBox.jsx';
+import { ToastContainer, toast } from 'react-toastify';
 
 const router = createBrowserRouter([
   {
@@ -22,11 +24,11 @@ const router = createBrowserRouter([
     children: [
       {
         path: "/",
-        element: <Welcome />, 
+        element: <><Navbar /><Welcome /></>,
       },
       {
         path: "/registration",
-        element: <Registration />, 
+        element: <Registration />,
       },
       {
         path: "/Login",
@@ -38,11 +40,17 @@ const router = createBrowserRouter([
       },
       {
         path: "/DashBoard",
-        element: <DashBoard />,
+        element: <><Navbar /><DashBoard /></>,
         children: [
           {
             path: "contact",
-            element: <Contact />
+            element: <Contact />,
+            children:[
+              {
+                path:":chatId",
+                element: <ChatBox />
+              },
+              ]
           },
           {
             path: "call",
@@ -68,7 +76,22 @@ const router = createBrowserRouter([
 ])
 
 createRoot(document.getElementById('root')).render(
-  <StrictMode>
+  <>
+    {/* <StrictMode> */}
     <RouterProvider router={router} />
-  </StrictMode>,
+    <div>
+      <ToastContainer
+        stacked
+        position="top-center"
+        autoClose={3000}
+        hideProgressBar
+        newestOnTop={false}
+        closeOnClick={true}
+        pauseOnFocusLoss={false}
+        draggable
+        pauseOnHover
+        theme="colored" />
+    </div>
+    {/* </StrictMode>, */}
+  </>
 )
