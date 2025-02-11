@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import { emailIdRegex, phoneNoRegex, passwordRegex } from './Regexes';
 import { CiMail } from "react-icons/ci";
 import { CiLock } from "react-icons/ci";
+import { TbLockPassword } from "react-icons/tb";
 import { IoMdEyeOff } from "react-icons/io";
 import { IoEye } from "react-icons/io5";
 import { Link, useNavigate } from 'react-router-dom';
+import { ToastContainer, toast } from 'react-toastify';
 import axios from 'axios';
 
 function ForgotPassword() {
@@ -61,6 +63,7 @@ function ForgotPassword() {
             .then(result => {
                 console.log(result)
                 if (result.data === "Success") {
+                    setTimeout(() => toast.success("Successfully Change Password!"), 100);
                     navigate("/Login")
                 }
             })
@@ -78,15 +81,52 @@ function ForgotPassword() {
             })
     }
     return (
-        <div className='container center flex flex-col  mx-auto mt-9  w-2/6'>
-            <div className='container text-white bg-slate-900 py-9 px-0 rounded-2xl  items-center text-center shadow-slate-500 drop-shadow shadow-md '>
+        <div className='container center flex flex-col justify-center items-center h-screen mx-auto w-2/6'>
+            <div>
+                <ToastContainer
+                    stacked
+                    position="top-center"
+                    autoClose={2000}
+                    // hideProgressBar
+                    newestOnTop={false}
+                    closeOnClick={true}
+                    pauseOnFocusLoss={false}
+                    draggable
+                    pauseOnHover
+                    theme="colored" />
+            </div>
+            <div
+                className='
+                container 
+                text-white 
+                bg-slate-800 
+                py-9 px-0 
+                rounded-2xl 
+                items-center 
+                text-center 
+                border-[1px] border-slate-700
+                drop-shadow shadow-2xl shadow-slate-900
+                hover:shadow-slate-950 hover:shadow-[rgba(0,0,10,0.5)_1px_1px_90px_1px]
+                duration-500'
+            >
 
-                <div className="container">
-                    <h1 className='container mb-3 font-bold text-lg'>Reset Password</h1>
+                <div className="container w-9/12 mx-auto">
+                    <div className='container bg-gray-700 rounded-2xl p-2 px-2 ml-3 w-2/6 flex col font-medium text-slate-200 text-lg shadow-slate-500 drop-shadow shadow-[rgba(0,0,10,0.5)_1px_1px_5px_1px] '>
+                        <h1 className='select-none font-bold '>M</h1>
+                        <p className='select-none text-base italic'>y</p>
+                        <h1 className='select-none font-bold'>C</h1>
+                        <p className='select-none italic'>hat</p>
+                        <h1 className='select-none font-bold'>MX</h1>
+                    </div>
+                </div>
+                <div className="container w-8/12 ">
+                    <h1 className='container mb-3 mt-1 pl-16 text-left font-bold text-lg'>
+                        Reset Password
+                    </h1>
                 </div>
 
                 <div className="container EmailID-PhoneNo my-2">
-                    <div className={`flex w-4/6 bg-slate-950 my-2 mx-auto rounded-lg  drop-shadow shadow-sm hover:shadow-slate-300 border-2 border-solid ${inputValuesErr.EmailIDOrPhoneNo === true ? showErrorInBorder : unShowErrorInBorder}`}>
+                    <div className={`flex w-9/12 bg-slate-950 my-3 mx-auto rounded-md drop-shadow shadow-sm hover:shadow-slate-300 duration-300 border-2 border-solid ${inputValuesErr.EmailIDOrPhoneNo === true ? showErrorInBorder : unShowErrorInBorder}`}>
                         <div className=' border-r w-1/12 items-center my-auto ml-1'>
                             <CiMail />
                         </div>
@@ -104,7 +144,7 @@ function ForgotPassword() {
                 </div>
 
                 <div className="container Password">
-                    <div className={`flex w-4/6 bg-slate-950 my-2 mx-auto rounded-lg  drop-shadow shadow-sm hover:shadow-slate-300 border-2 border-solid ${inputValuesErr.Password === true ? showErrorInBorder : unShowErrorInBorder}`}>
+                    <div className={`flex w-9/12 bg-slate-950 my-3 mx-auto rounded-md  drop-shadow shadow-sm hover:shadow-slate-300 duration-300 border-2 border-solid ${inputValuesErr.Password === true ? showErrorInBorder : unShowErrorInBorder}`}>
                         <div className='border-r w-1/12 items-center my-auto ml-1' >
                             <CiLock />
                         </div>
@@ -128,9 +168,9 @@ function ForgotPassword() {
                 </div>
 
                 <div className="container Confirm-Password my-2">
-                    <div className={`flex w-4/6 bg-slate-950 my-2 mx-auto rounded-lg  drop-shadow shadow-sm hover:shadow-slate-300 border-2 border-solid ${inputValuesErr.ConfirmPassword === true ? showErrorInBorder : unShowErrorInBorder}`}>
-                        <div className='text-slate-300 border-r w-1/12 items-center my-auto ml-1'>
-                            <TbLockPassword />
+                    <div className={`flex w-9/12 bg-slate-950 my-3 mx-auto rounded-md  drop-shadow shadow-sm hover:shadow-slate-300 duration-300 border-2 border-solid ${inputValuesErr.ConfirmPassword === true ? showErrorInBorder : unShowErrorInBorder}`}>
+                        <div className='border-r w-1/12 items-center my-auto ml-1' >
+                            <CiLock />
                         </div>
                         <input
                             type={passwordVisibility ? 'text' : 'password'}
@@ -147,11 +187,22 @@ function ForgotPassword() {
                 </div>
 
                 <div className='text-center items-center m-3 mb-2'>
-                    <button type='submit' onClick={onSubmitValidation} className=' font-bold text-slate-300  bg-blue-800 hover:bg-blue-700 my-1 mx-0 p-1 px-4 rounded-lg w-[35vh]'>Submit </button>
+                    <button
+                        type='submit'
+                        onClick={onSubmitValidation}
+                        className='font-bold text-slate-300 bg-blue-800 hover:bg-blue-700 duration-300 my-1 mx-0 p-1 px-4 rounded-lg w-4/6 h-9'
+                    >
+                        Submit
+                    </button>
                 </div>
 
                 <div className="container text-base text-center mb-1">
-                    <Link to="/Login" className=' text-base text-blue-600 hover:underline'>Go Back?</Link>
+                    <Link
+                        to="/Login"
+                        className='text-base text-blue-600 hover:underline duration-500'
+                    >
+                        Go Back!
+                    </Link>
                 </div>
 
             </div>
