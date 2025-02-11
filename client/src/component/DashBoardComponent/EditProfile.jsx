@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { userNameRegex, emailIdRegex, phoneNoRegex, passwordRegex } from '../Regexes';
 import { Link, useNavigate } from 'react-router-dom';
+import { IoArrowBack } from "react-icons/io5";
 import axios from 'axios';
 
 export default function EditProfile() {
@@ -55,62 +56,78 @@ export default function EditProfile() {
     }
 
     return (
-        <div className="container mx-auto mt-2 h-[5.4in] ">
-            <div className="container flex flex-col ">
-                <div className="container mb-3 pl-1 bg-indigo-900 bg-opacity-50 rounded-2xl  rounded-s-sm">
-                    <h1 className='text-lg font-bold'>
+        <div className="container mx-auto mt-2 h-[5.4in] w-full">
+            <div className="container flex flex-col w-full h-full p-1">
+                <div className="container flex mb-3 pl-2 ">
+                    <Link to="/DashBoard/profile" className='text-xl my-auto p-1 rounded-full hover:bg-slate-950 duration-200'>
+                        <IoArrowBack />
+                    </Link>
+                    <h1 className='text-lg font-bold ml-1'>
                         Edit Your Profile
                     </h1>
                 </div>
 
-                <div className="container">
-                    <input
-                        type='text'
-                        maxLength={10}
-                        placeholder='User Name'
-                        name='UserName'
-                        value={inputValues.UserName}
-                        onChange={inputValueHandler}
-                        className={` font-normal text-base bg-slate-900 my-2 mx-0 py-1 px-2 rounded-lg w-4/6 drop-shadow shadow-sm hover:shadow-slate-300 border-2 border-solid ${inputValuesErr.UserName === true ? showErrorInBorder : unShowErrorInBorder}`}
-                    >
-                    </input>
-                    {inputValuesErr.UserName === true && <p className='text-red-600'>{inputValues.UserName === '' ? 'Enter Your User Name' : 'Your UserName is inValid'}</p>}
-                </div>
+                <div className="container flex flex-col w-[97%] h-[88%] mx-auto rounded-lg border-slate-600 border-[0.01px]">
+                    <div className="container w-full my-2 mx-auto flex flex-col justify-center">
+                        <div className='text-xs ml-4 mt-1 font-bold text-slate-100'>
+                            User Name
+                        </div>
+                        <input
+                            type='text'
+                            maxLength={10}
+                            placeholder='User Name'
+                            name='UserName'
+                            value={inputValues.UserName}
+                            onChange={inputValueHandler}
+                            className={`font-normal text-base bg-slate-950 mx-auto py-1 px-3 rounded-xl w-11/12 outline-none drop-shadow shadow-sm hover:shadow-slate-300 border-2 border-solid ${inputValuesErr.UserName === true ? showErrorInBorder : unShowErrorInBorder} duration-300`}
+                        >
+                        </input>
+                        {inputValuesErr.UserName === true && <p className='text-red-600'>{inputValues.UserName === '' ? 'Enter Your User Name' : 'Your UserName is inValid'}</p>}
+                    </div>
 
-                <div className="container">
-                    <div className='container'>Email ID</div>
-                    <input
-                        type='email'
-                        placeholder='Email ID'
-                        name='EmailID'
-                        value={inputValues.EmailID}
-                        onChange={inputValueHandler}
-                        className={` font-normal text-base bg-slate-800 my-2 mx-0 py-1 px-2 rounded-lg w-4/6 drop-shadow shadow-sm hover:shadow-slate-300 border-2 border-solid ${inputValuesErr.EmailID === true ? showErrorInBorder : unShowErrorInBorder}`}
-                    >
-                    </input>
-                    {inputValuesErr.EmailID === true && <p className='text-red-600'>{inputValues.EmailID === '' ? 'Enter Your Email ID' : 'Your Email ID is InValid'}</p>}
-                </div>
+                    <div className="container w-full my-2 mx-auto flex flex-col justify-center">
+                        <div className='text-xs ml-4 mt-1 font-bold text-slate-100'>
+                            Email ID
+                        </div>
+                        <input
+                            type='email'
+                            placeholder='Email ID'
+                            name='EmailID'
+                            value={inputValues.EmailID}
+                            onChange={inputValueHandler}
+                            className={`font-normal text-base bg-slate-950 mx-auto py-1 px-3 rounded-xl w-11/12 outline-none drop-shadow shadow-sm hover:shadow-slate-300 border-2 border-solid ${inputValuesErr.EmailID === true ? showErrorInBorder : unShowErrorInBorder} duration-300`}
+                        >
+                        </input>
+                        {inputValuesErr.EmailID === true && <p className='text-red-600'>{inputValues.EmailID === '' ? 'Enter Your Email ID' : 'Your Email ID is InValid'}</p>}
+                    </div>
 
-                <div className="container">
-                    <input
-                        type='text'
-                        maxLength={10}
-                        placeholder='Phone Number'
-                        name='PhoneNo'
-                        value={inputValues.PhoneNo}
-                        onChange={inputValueHandler}
-                        className={` font-normal text-base bg-slate-950 my-2 mx-0 py-1 px-2 rounded-lg w-4/6 drop-shadow shadow-sm hover:shadow-slate-300 border-2 border-solid ${inputValuesErr.PhoneNo === true ? showErrorInBorder : unShowErrorInBorder}`}
-                    >
-                    </input>
-                    {inputValuesErr.PhoneNo === true && <p className='text-red-600'>{inputValues.PhoneNo === '' ? 'Enter Your Phone Number' : 'Your Phone Number is InVaild'}</p>}
-                </div>
+                    <div className="container w-full my-2 mx-auto flex flex-col justify-center">
+                        <div className='text-xs ml-4 mt-1 font-bold text-slate-100'>
+                            Phone No.
+                        </div>
+                        <input
+                            type='text'
+                            maxLength={10}
+                            placeholder='Phone Number'
+                            name='PhoneNo'
+                            value={inputValues.PhoneNo}
+                            onChange={inputValueHandler}
+                            className={`font-normal text-base bg-slate-950 mx-auto py-1 px-3 rounded-xl w-11/12 outline-none drop-shadow shadow-sm hover:shadow-slate-300 border-2 border-solid ${inputValuesErr.PhoneNo === true ? showErrorInBorder : unShowErrorInBorder} duration-300`}
+                        >
+                        </input>
+                        {inputValuesErr.PhoneNo === true && <p className='text-red-600'>{inputValues.PhoneNo === '' ? 'Enter Your Phone Number' : 'Your Phone Number is InValid'}</p>}
+                    </div>
 
 
-                <div className="container flex justify-around mt-1">
-                    <Link to="/DashBoard/profile">
-                        <button type='submit' className='text-base font-bold text-slate-300  bg-blue-800 hover:bg-blue-700 my-1 p-2 px-4 rounded-lg h-9'>Go Back </button>
-                    </Link>
-                    <button type='submit' onClick={onSubmitValidation} className='text-base font-bold text-slate-300  bg-blue-800 hover:bg-blue-700 my-1 p-2 px-4 rounded-lg  h-9'>Submit </button>
+                    <div className="container w-full my-3 mx-auto flex flex-col justify-center">
+                        <button
+                            type='submit'
+                            onClick={onSubmitValidation}
+                            className='text-base font-bold text-slate-300 bg-blue-800 hover:bg-blue-700 w-[90%] mx-auto p-2 px-4 rounded-xl h-9 duration-300'
+                        >
+                            Save Changes
+                        </button>
+                    </div>
                 </div>
 
             </div>
