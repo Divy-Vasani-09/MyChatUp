@@ -23,14 +23,24 @@ function Contact() {
             axios.post('http://127.0.0.1:3002/contact', { userData })
                 .then(result => {
                     console.log(result);
-
+                    
                     for (let element of result.data.conversations) {
-                        let newConversationData = {
-                            conversation_id: element._id,
-                            senderInfo: element.participants[0],
-                            receiverInfo: element.participants[1],
-                        };
-                        setConversationList((prev) => [newConversationData, ...prev]);
+                        if (element.participants[0].EmailID === userData.EmailID) {
+                            let newConversationData = {
+                                conversation_id: element._id,
+                                senderInfo: element.participants[0],
+                                receiverInfo: element.participants[1],
+                            };
+                            setConversationList((prev) => [newConversationData, ...prev]);
+                        }
+                        if(element.participants[1].EmailID === userData.EmailID){
+                            let newConversationData = {
+                                conversation_id: element._id,
+                                senderInfo: element.participants[1],
+                                receiverInfo: element.participants[0],
+                            };
+                            setConversationList((prev) => [newConversationData, ...prev]);
+                        }
                     }
                 })
                 .catch(err => {

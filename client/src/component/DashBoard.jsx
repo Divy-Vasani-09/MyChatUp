@@ -1,12 +1,20 @@
-import React, { useState } from 'react'
-import SideBar from './DashBoardComponent/SideBar'
-import { Outlet } from 'react-router-dom'
+import React, { useEffect, useState } from 'react';
+import SideBar from './DashBoardComponent/SideBar';
+import { Outlet } from 'react-router-dom';
 import { ToastContainer, toast } from 'react-toastify';
-import ChatBox from './DashBoardComponent/ChatComponents/ChatBox'
+import ChatBox from './DashBoardComponent/ChatComponents/ChatBox';
+import socketIoClient from 'socket.io-client'
 
 export default function DashBoard() {
+  const socketIo = socketIoClient('http://localhost:3002');
   const [receiverPass, setReceiverPass] = useState(false);
-    const [roomInfo, setRoomInfo] = useState({});
+  const [roomInfo, setRoomInfo] = useState({});
+
+  useEffect(() => {
+    socketIo.on('chat', (chats) => {
+      setChats(chats)
+    });
+  });
 
   return (
     <div className='text-white flex'>

@@ -1,5 +1,5 @@
 const express = require('express');
-const app = express();
+const http = require('http');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
@@ -8,10 +8,33 @@ const userRegisterModel = require('./Models/userRegisterData');
 const conversationModel = require('./Models/conversation');
 const messageModel = require('./Models/message');
 const mongoURI = 'mongodb://127.0.0.1:27017/users';
+const Server = require('socket.io').Server;
 
-
+const app = express();
 app.use(express.json());
 app.use(cors());
+
+const server = http.createServer(app);
+const io = new Server(server, {
+    cors:{
+        origin: "*",
+        // origin: "http://localhost:5174",
+
+    }
+})
+
+io.on('connection', (socket)=>{
+    console.log("a User Connected");
+
+    // socket.on("chat", chat => {
+    //     io.emit("chat", chat)    
+    // })
+
+    socket.on("disconnect", ()=>{
+        console.log("User Is Disconnected!");
+
+    })
+})
 
 mongoose.connect(mongoURI);
 
@@ -163,10 +186,15 @@ app.get('/SearchBarNewChat', (req, res) => {
 app.post('/contact', async (req, res) => {
     const { userData } = req.body;
     const conversations = await conversationModel
-        .find({ participants: { $in: [userData._id] } })
+        .find({
+            $or: [
+                { "participants.0": userData._id },
+                { "participants.1": userData._id }
+            ]
+        })
         .populate({
-            path: "participants",
-            select: "_id UserName EmailID PhoneNo",
+            path: "participants messages",
+            select: "_id UserName EmailID PhoneNo message",
         });
 
     if (conversations.length === 0) {
@@ -175,8 +203,6 @@ app.post('/contact', async (req, res) => {
             message: "No conversations found",
         });
     }
-
-    console.log("Fetched Conversations:", JSON.stringify(conversations, null, 1));
 
     res.status(200).json({
         success: true,
@@ -262,6 +288,6 @@ app.post('/sendMessage', async (req, res) => {
     }
 })
 
-app.listen(3002, () => {
-    console.log("Server is Running")
+server.listen(3002, () => {
+    console.log("Server is Running http://localhost:3002")
 })
