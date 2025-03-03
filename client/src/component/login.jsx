@@ -126,6 +126,12 @@ function login() {
               name='EmailIDOrPhoneNo'
               value={inputValues.EmailIDOrPhoneNo}
               onChange={inputValueHandler}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  onSubmitValidation();
+                }
+              }}
               className={` font-normal text-base bg-slate-950 py-1 px-2 rounded-md w-11/12 outline-none`}
             >
             </input>
@@ -146,6 +152,12 @@ function login() {
                 name='Password'
                 value={inputValues.Password}
                 onChange={inputValueHandler}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    onSubmitValidation();
+                  }
+                }}
                 className={` font-normal text-base text-left bg-slate-950 py-1 px-2 rounded-lg outline-none w-full`}
               >
               </input>

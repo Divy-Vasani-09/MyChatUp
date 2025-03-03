@@ -13,10 +13,25 @@ const messageSchema = mongoose.Schema({
     },
     message: {
         type: String,
-        required: true,
         trim: true,
         validate: [{
-            validator: (value) => value.length > 0,
+            validator: (value) => value.length >= 0,
+            message: 'Message con not be empty',
+        },]
+    },
+    image: {
+        type: String,
+        trim: true,
+        validate: [{
+            validator: (value) => value.length >= 0,
+            message: 'Message con not be empty',
+        },]
+    },
+    video: {
+        type: String,
+        trim: true,
+        validate: [{
+            validator: (value) => value.length >= 0,
             message: 'Message con not be empty',
         },]
     },

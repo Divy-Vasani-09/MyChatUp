@@ -4,9 +4,9 @@ import { Link, NavLink } from 'react-router-dom'
 export default function () {
 
   return (
-    <div className='container relative mx-auto mt-2 mb-2 h-[5.2in] '>
-      <div className="container ">
-        <div className="container text-center items-center flex flex-col gap-3 mt-3">
+    <div className=' relative mx-auto mt-2  min-h-[84.6vh] max-h-[84.6vh]'>
+      <div className="">
+        <div className=" text-center items-center flex flex-col gap-3 mt-3">
           <NavLink
             to="contact"
             className={(e) => {

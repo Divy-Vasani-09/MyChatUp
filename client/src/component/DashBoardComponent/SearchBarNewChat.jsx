@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import axios from 'axios'
 import { FaSearch } from 'react-icons/fa'
 
-const SearchBarNewChat = ({setSearchResults, userData}) => {
+const SearchBarNewChat = ({ setSearchResults, userData}) => {
     const [input, setInput] = useState("");
     useEffect(() => {
         const delayToCall = setTimeout(() => {
@@ -36,6 +36,7 @@ const SearchBarNewChat = ({setSearchResults, userData}) => {
                         placeholder='Search'
                         name='Search'
                         value={input}
+                        autoFocus
                         onChange={(e) => searchHandler(e.target.value)}
                         maxLength={40}
                         className='text-lg cursor-pointer bg-transparent border-none outline-none w-full h-full ml-2'
