@@ -1,7 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react'
 
-export default function Messages({ chats, userData }) {
+export default function Messages({ chats, userData, loadMoreMessage, setLoadMoreMessage, hasMore }) {
   const messagesEndRef = useRef(null);
+  const chatContainerRef = useRef(null);
+  const [scroll, setScroll] = useState(true);
 
   const [isFullscreen, setIsFullscreen] = useState(false);
   const imageRefs = useRef([]);
@@ -18,10 +20,38 @@ export default function Messages({ chats, userData }) {
   };
 
   useEffect(() => {
-    setTimeout(() => {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, 1000);
+    if (!loadMoreMessage && messagesEndRef.current) {
+      setTimeout(() => {
+        messagesEndRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
+        chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+      }, 500);
+    }
   }, [chats])
+
+  const handleScroll = () => {
+    if (chatContainerRef.current.scrollTop === 0 && hasMore) {
+      setLoadMoreMessage(true)
+      const previousOffset = getScrollOffset();
+      setTimeout(() => {
+        restoreScrollPosition(previousOffset);
+        setLoadMoreMessage(false);
+      }, 200);
+    }
+  };
+
+  const getScrollOffset = () => {
+    if (chatContainerRef.current) {
+      return chatContainerRef.current.scrollHeight - chatContainerRef.current.scrollTop;
+    }
+    return 0;
+  };
+
+  // Function to restore the scroll position after loading messages
+  const restoreScrollPosition = (previousOffset) => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight - previousOffset;
+    }
+  };
 
   return (
     <div className='w-full h-full p-1 text-white'>
@@ -34,7 +64,11 @@ export default function Messages({ chats, userData }) {
             </h1>
           </div>
           :
-          <div className='w-full h-full overflow-y-auto scroll-smooth'>
+          <div
+            ref={chatContainerRef}
+            className='w-full h-full overflow-y-auto scroll-smooth'
+            onScroll={handleScroll}
+          >
             {(() => {
               let lastDate = null;
 
@@ -43,7 +77,7 @@ export default function Messages({ chats, userData }) {
                 .map((result, id) => {
                   const now = new Date(result.updatedAt);
                   const date = now.toLocaleDateString();
-                  const time = now.toLocaleTimeString();
+                  const time = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
                   const showHeader = date !== lastDate;
                   lastDate = date;

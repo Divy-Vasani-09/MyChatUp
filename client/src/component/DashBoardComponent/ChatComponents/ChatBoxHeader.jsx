@@ -6,7 +6,7 @@ import { HiOutlineVideoCamera } from "react-icons/hi2";
 import { BsThreeDotsVertical } from "react-icons/bs";
 import { Link } from 'react-router-dom';
 
-export default function ChatBoxHeader({roomInfo}) {
+export default function ChatBoxHeader({ roomInfo, status }) {
     const [receiver, setReceiver] = useState({});
     const [receiverPass, setReceiverPass] = useState(false);
 
@@ -19,18 +19,33 @@ export default function ChatBoxHeader({roomInfo}) {
                         src={UserIcon}
                     />
                 </div>
-                <div className="my-auto">{roomInfo.receiverInfo.UserName}</div>
+                <div className="flex flex-col justify-center gap-0">
+                    <div className='p-0 m-0 '>
+                        {roomInfo.receiverInfo.UserName}
+                    </div>
+                    <div className={`text-xs p-0 m-0 ${!status?.online ? 'text-slate-200': 'text-green-300'}`}>
+                        {
+                            !!status?.online ?
+                                'Online'
+                                :
+                                !!status?.lastSeen ?
+                                    `Last seen: ${status.lastSeen}`
+                                    :
+                                    'Offline'
+                        }
+                    </div>
+                </div>
             </div>
             <div className="flex justify-around">
-                <Link className="my-auto mx-2 text-2xl rounded-full bg-slate-800 border-[0.01px] border-slate-600 p-1 hover:bg-slate-950 hover:border-slate-500 duration-300">
+                <div className="cursor-pointer my-auto mx-2 text-2xl rounded-full bg-slate-800 border-[0.01px] border-slate-600 p-1 hover:bg-slate-950 hover:border-slate-500 duration-300">
                     <IoCallOutline />
-                </Link>
-                <Link className="my-auto mx-2 text-2xl rounded-full bg-slate-800 border-[0.01px] border-slate-600 p-1 hover:bg-slate-950 hover:border-slate-500 duration-300">
+                </div>
+                <div className="cursor-pointer my-auto mx-2 text-2xl rounded-full bg-slate-800 border-[0.01px] border-slate-600 p-1 hover:bg-slate-950 hover:border-slate-500 duration-300">
                     <HiOutlineVideoCamera />
-                </Link>
-                <Link className="my-auto mx-2 text-2xl rounded-full bg-slate-800 border-[0.01px] border-slate-600 p-1 hover:bg-slate-950 hover:border-slate-500 duration-300">
+                </div>
+                <div className="cursor-pointer my-auto mx-2 text-2xl rounded-full bg-slate-800 border-[0.01px] border-slate-600 p-1 hover:bg-slate-950 hover:border-slate-500 duration-300">
                     <BsThreeDotsVertical />
-                </Link>
+                </div>
             </div>
         </div >
     )

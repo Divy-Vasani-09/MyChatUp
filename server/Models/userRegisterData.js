@@ -23,6 +23,15 @@ const useRegisterSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    
+    online: {
+        type: Boolean,
+        default: false,
+    },
+    lastSeen: {
+        type: Date,
+        default: null,
+    }
 },
     {
         timestamps: true

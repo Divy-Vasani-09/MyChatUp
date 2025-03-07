@@ -1,4 +1,6 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
+import { useRef } from 'react';
+import Loader from './Loader';
 import axios from 'axios';
 
 import { FaRegSmile } from "react-icons/fa";
@@ -8,9 +10,9 @@ import { RiFolderVideoLine } from "react-icons/ri";
 import { IoSendSharp } from "react-icons/io5";
 
 import EmojiPicker from 'emoji-picker-react';
-import { useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 
-export default function ChatInput({ roomInfo, inputRef, setNewMessage, setNewImageMessage, setNewVideoMessage }) {
+export default function ChatInput({ roomInfo, inputRef, setNewMessage, setNewImageMessage, setNewVideoMessage, chats, }) {
 
     const [inputOfMessage, setInputOfMessage] = useState('');
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
@@ -21,10 +23,13 @@ export default function ChatInput({ roomInfo, inputRef, setNewMessage, setNewIma
     const [sizeLimitError, setsizeLimitError] = useState('');
     const [showSelectedVideo, setShowSelectedVideo] = useState(false);
     const [selectedVideos, setSelectedVideos] = useState([]);
+    const [loader, setLoader] = useState(false);
 
-    const imageUploadRef = useRef(null);
-    const videoUploadRef = useRef(null);
-
+    const emojiPickerRef = useRef();
+    const paperclipOptionRef = useRef();
+    const imageUploadRef = useRef();
+    const videoUploadRef = useRef();
+    const selectedRef = useRef();
 
     const inputValueHandler = (e) => {
         setInputOfMessage(e.target.value);
@@ -37,12 +42,43 @@ export default function ChatInput({ roomInfo, inputRef, setNewMessage, setNewIma
         setInputOfMessage((prev) => prev + e.emoji);
         inputRef.current.focus();
     }
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (emojiPickerRef.current && !emojiPickerRef.current.contains(event.target)) {
+                setShowEmojiPicker(false);
+            }
+        };
+
+        if (showEmojiPicker) {
+            document.addEventListener("mousedown", handleClickOutside);
+        }
+
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, [showEmojiPicker]);
 
     const handleShowOption = () => {
         setShowFileOptions(!showFileOptions);
         setShowSelectedImage(false);
         setShowSelectedVideo(false);
     }
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (paperclipOptionRef.current && !paperclipOptionRef.current.contains(event.target)) {
+                setShowFileOptions(false);
+            }
+        };
+
+        if (showFileOptions) {
+            document.addEventListener("mousedown", handleClickOutside);
+        }
+
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, [showFileOptions]);
+
     const handleImageUpload = (e) => {
         e.preventDefault();
         imageUploadRef.current.click();
@@ -104,7 +140,7 @@ export default function ChatInput({ roomInfo, inputRef, setNewMessage, setNewIma
 
             Promise.all(validFiles.map(convertToBase64))
                 .then(base64Videos => {
-                    setSelectedVideos(base64Videos); // Store Base64 video for preview
+                    setSelectedVideos(base64Videos); // Store Base64 images for preview
                     console.log(base64Videos)
                     setShowFileOptions(false);
                     setShowSelectedVideo(true);
@@ -114,6 +150,28 @@ export default function ChatInput({ roomInfo, inputRef, setNewMessage, setNewIma
             inputRef.current.focus();
         }
     };
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (selectedRef.current && !selectedRef.current.contains(event.target)) {
+                setShowSelectedImage(false);
+                setSelectedImages();
+                setShowSelectedVideo(false);
+                setSelectedVideos();
+            }
+        };
+
+        if (showSelectedImage || showSelectedVideo) {
+            document.addEventListener("mousedown", handleClickOutside);
+        }
+
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, [showSelectedImage, showSelectedVideo]);
+
+    useEffect(() => {
+        setLoader(false);
+    }, [chats])
 
 
     const sendMessageHandler = () => {
@@ -122,8 +180,9 @@ export default function ChatInput({ roomInfo, inputRef, setNewMessage, setNewIma
             setNewMessage(inputOfMessage);
             setNewImageMessage(selectedImages);
             setNewVideoMessage(selectedVideos);
-            
+            setLoader(true);
         }
+
         setInputOfMessage('');
         setSelectedImages([]);
         setSelectedVideos([]);
@@ -147,17 +206,18 @@ export default function ChatInput({ roomInfo, inputRef, setNewMessage, setNewIma
             >
                 {
                     showEmojiPicker &&
-                    <span className='absolute bottom-10 left-0'>
+                    <span
+                        ref={emojiPickerRef}
+                        className='absolute bottom-10 left-0'
+                    >
                         <EmojiPicker
                             height={350}
                             width={300}
-                            theme='dark'
-                            emojiStyle='apple'
-                            open={true}
+                            theme="dark"
+                            emojiStyle="apple"
                             reactionsDefaultOpen={false}
-                            lazyLoad={true}
+                            lazyLoad={false}
                             onEmojiClick={handleEmoji}
-
                             className="custom-emoji-picker"
                             style={{
                                 backgroundColor: '#0f172a', // Dark background color
@@ -202,7 +262,9 @@ export default function ChatInput({ roomInfo, inputRef, setNewMessage, setNewIma
                 }
                 {
                     showFileOptions &&
-                    <div className='absolute index-10 bottom-11 left-10 flex flex-col gap-1 bg-black rounded-md'>
+                    <div
+                        ref={paperclipOptionRef}
+                        className='absolute index-10 bottom-11 left-10 flex flex-col gap-1 bg-black rounded-md'>
                         <p className={`text-red-500 ${sizeLimitError ? 'w-36' : ''} bg-slate-800 rounded-lg`}>
                             {sizeLimitError}
                         </p>
@@ -249,6 +311,7 @@ export default function ChatInput({ roomInfo, inputRef, setNewMessage, setNewIma
                 {
                     showSelectedImage &&
                     <div
+                        ref={selectedRef}
                         className='absolute bottom-11 left-1 h-[500%] overflow-y-auto scroll-smooth flex flex-col gap-2 bg-slate-700 p-2 rounded-md'
                     >
 
@@ -262,9 +325,10 @@ export default function ChatInput({ roomInfo, inputRef, setNewMessage, setNewIma
                 {
                     showSelectedVideo &&
                     <div
+                        ref={selectedRef}
                         className='absolute bottom-11 left-1  overflow-y-auto scroll-smooth flex flex-col gap-2 bg-slate-700 p-2 rounded-md'
                     >
-                        <video width="750" height="500" controls >
+                        <video width="250" height="100" controls >
                             <source src={selectedVideos} type="video/mp4" />
                         </video>
                     </div>
@@ -292,7 +356,9 @@ export default function ChatInput({ roomInfo, inputRef, setNewMessage, setNewIma
                     onKeyDown={(e) => {
                         if (e.key === 'Enter' && !e.shiftKey) {
                             e.preventDefault();
-                            sendMessageHandler();
+                            if (!loader) {
+                                sendMessageHandler();
+                            }
                         }
                     }}
                     onClick={() => setShowEmojiPicker(false)}
@@ -300,16 +366,29 @@ export default function ChatInput({ roomInfo, inputRef, setNewMessage, setNewIma
                 >
                 </textarea>
             </div>
-            <div
-                className='cursor-pointer flex justify-around rounded-lg border-[0.1px] border-slate-600'
-                onClick={sendMessageHandler}
-            >
-                <div
-                    className="my-auto mx-2 text-2xl text-slate-300 bg-slate-800 p-1 hover:text-slate-200 hover:bg-slate-950 duration-300"
-                >
-                    <IoSendSharp />
-                </div>
-            </div>
+            {
+                loader ?
+                    <div
+                        className='cursor-pointer flex justify-around rounded-lg border-[0.1px] border-slate-600'
+                    >
+                        <div
+                            className="my-auto mx-2 text-2xl text-slate-300 bg-slate-800 p-1 hover:text-slate-200 hover:bg-slate-950 duration-300"
+                        >
+                            <Loader />
+                        </div>
+                    </div>
+                    :
+                    <div
+                        className='cursor-pointer flex justify-around rounded-lg border-[0.1px] border-slate-600'
+                        onClick={sendMessageHandler}
+                    >
+                        <div
+                            className="my-auto mx-2 text-2xl text-slate-300 bg-slate-800 p-1 hover:text-slate-200 hover:bg-slate-950 duration-300"
+                        >
+                            <IoSendSharp />
+                        </div>
+                    </div>
+            }
         </div >
     )
 }

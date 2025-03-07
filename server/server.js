@@ -35,30 +35,52 @@ const io = new Server(server, {
         // origin: "*",
         origin: "http://localhost:5173",
     },
-    maxHttpBufferSize: 1e8, // 100MB buffer limit (adjust as needed)
-    pingTimeout: 90000, // Extend timeout to avoid disconnection
-    pingInterval: 30000, // Wait longer before timing out
+    maxHttpBufferSize: 1e8,
+    pingTimeout: 90000,
+    pingInterval: 30000,
 })
 
+const socketIdToUserId = new Map();
 let users = 0;
 let roomId = null;
+
 io.on('connection', (socket) => {
-    console.log("a User Connected");
+    console.log("a User Connected", socket.id);
+    let userId = socket.handshake.query.userId;
+
 
     users++;
     socket.emit('broadcast', { msg: 'Hii, Welcome!' })
     socket.broadcast.emit('broadcast', { msg: users + ' users connected!' })
 
+    socket.on("join_chatApp", (userId) => {
+        socket.join(userId)
+        console.log(`User ${socket.id} join chat ${userId}`)
+    })
+
+    socket.on("leave_chatApp", (userId) => {
+        socket.leave(userId)
+        console.log(`User ${socket.id} leave chat ${userId}`)
+    })
 
     socket.on('join room', async (roomInfo) => {
+        socket.leave(roomId);
         roomId = roomInfo.conversation_id;
+        const receiverId = roomInfo.receiverInfo._id;
+        const senderId = roomInfo.senderInfo._id;
+
         console.log("connected Room Id :-", roomId)
+
         socket.join(roomId);
 
         try {
+            const page = 1; // Load first page initially
+            const limit = 50;
+
             const messages = await conversationModel.find({ _id: roomId })
                 .populate({
                     path: "messages",
+                    options: { sort: { _id: -1 }, skip: (page - 1) * limit, limit: limit }, // Pagination applied
                     select: "_id sender receiver message image video updatedAt",
                     populate: {
                         path: "sender receiver",
@@ -68,16 +90,60 @@ io.on('connection', (socket) => {
             if (!messages) return;
 
             socket.emit('joined', { messages });
-
         } catch (err) {
             console.log("Error in joined Event : ", err)
         }
     })
 
+    socket.on('load more messages', async ({ roomId, page }) => {
+        try {
+            const limit = 50;
+    
+            const messages = await conversationModel.findOne({ _id: roomId })
+                .populate({
+                    path: "messages",
+                    options: { sort: { _id: -1 }, skip: (page - 1) * limit, limit: limit },
+                    select: "_id sender receiver message image video updatedAt",
+                    populate: {
+                        path: "sender receiver",
+                        select: "_id UserName EmailID PhoneNo",
+                    }
+                });
+    
+            if (!messages) return;
+    
+            socket.emit('more messages', { messages });
+    
+        } catch (err) {
+            console.log("Error in 'load more messages' event:", err);
+        }
+    });
+
+    socket.on("user_online", async ({ userId }) => {
+        try {
+            console.log(`Received user_online event from ${socket.id} for user ${userId}`);
+
+            const user = await userRegisterModel.findById(userId);
+            if (user) {
+                console.log("Setting user to online in database");
+                user.online = true;
+                await user.save();
+                socketIdToUserId.set(socket.id, userId);
+
+                console.log(`Emitting user_online event for user ${user._id}`);
+                io.emit("user_online", { userId: user._id, online: true });
+            }
+        } catch (error) {
+            console.log("Error updating user status:", error);
+        }
+    });
+
+
     socket.on('sendNewMessage', async (data) => {
         try {
             const { newMessage, newImageMessage, newVideoMessage, roomInfo } = data;
             const roomId = roomInfo.conversation_id;
+            console.log(roomInfo);
 
             const receiverId = roomInfo.receiverInfo._id;
             const senderId = roomInfo.senderInfo._id;
@@ -140,6 +206,7 @@ io.on('connection', (socket) => {
             }
 
             conversation.messages.push(message._id);
+            conversation.latestMessage = message._id;
             await conversation.save();
 
             const populatedMessage = await messageModel.findById(message._id)
@@ -148,7 +215,18 @@ io.on('connection', (socket) => {
                     select: "_id UserName EmailID PhoneNo "
                 });
 
-            io.sockets.in(roomId).emit("receiveNewMessage", { receiveNewMessage: populatedMessage })
+            io.to(roomId).emit("receiveNewMessage", { receiveNewMessage: populatedMessage })
+            io.to(receiverId).emit("new_Message", { receiveNewMessage: populatedMessage })
+            const validMessageIds = await messageModel.distinct("_id");
+
+            const remove = await conversationModel.updateMany(
+                { _id: roomId },
+                {
+                    $pull: {
+                        messages: { $nin: validMessageIds }
+                    }
+                }
+            );
             console.log("socket.send msg", data.newMessage)
 
         } catch (err) {
@@ -156,16 +234,36 @@ io.on('connection', (socket) => {
         }
     })
 
-    socket.on("disconnect", (reason) => {
+    socket.on("disconnect", async (reason) => {
         console.log("User Is Disconnected!", reason);
+
         users--;
         socket.broadcast.emit('broadcast', { msg: users + ' users connected!' })
+
+        const userId = socketIdToUserId.get(socket.id)
+        if (userId) {
+            try {
+                const user = await userRegisterModel.findById(userId)
+                if (user) {
+                    user.online = false,
+                        user.lastSeen = new Date();
+                    await user.save();
+                    io.emit('user_online', { userId: user._id, online: false, lastSeen: user.lastSeen })
+                    console.log('user disconnected successfully...!');
+                }
+            } catch (error) {
+
+            }
+        }
+
         if (reason === "transport error" || reason === "ping timeout") {
             console.log("Reconnecting...");
             setTimeout(() => {
                 socket.connect(); // Auto-reconnect
             }, 2000);
         }
+
+        socket.disconnect();
     })
 })
 
@@ -188,6 +286,8 @@ app.post('/Registration', async (req, res) => {
                     EmailID: EmailID,
                     PhoneNo: PhoneNo,
                     Password: SecurePassword,
+                    online: false,
+                    lastSeen: new Date(),
                 })
                     .then(user => {
                         console.log('Account successfully created!')
@@ -324,8 +424,9 @@ app.post('/contact', async (req, res) => {
             ]
         })
         .populate({
-            path: "participants messages",
-            select: "_id UserName EmailID PhoneNo message",
+            path: "participants latestMessage",
+            select: "_id UserName EmailID PhoneNo online lastSeen message sender receiver image video updatedAt",
+
         });
 
     if (conversations.length === 0) {
@@ -423,7 +524,7 @@ app.post('/newChat', async (req, res) => {
 
         // Create a new Conversation
         const createNewConversation = await conversationModel.create({
-            participants: [userData._id, chosenResult._id] // Only insert these fields
+            participants: [userData._id, chosenResult._id],
         });
 
         console.log("Conversation created");
