@@ -2,6 +2,8 @@ import React, { useContext, useEffect, useRef, useState } from 'react';
 import { Link, NavLink, useOutletContext } from 'react-router-dom';
 import SearchBarNewChat from './SearchBarNewChat';
 import { FaEdit } from "react-icons/fa";
+import { FaRegImage } from "react-icons/fa6";
+import { RiFolderVideoLine } from "react-icons/ri";
 import UserIcon from 'C:/Users/Destiny/OneDrive/Desktop/MyChatUp/client/src/assets/profile.png';
 import axios from 'axios';
 import Select from 'react-select';
@@ -18,13 +20,13 @@ function Contact() {
     const [searchResults, setSearchResults] = useState([]);
     const [chosenResult, setChosenResult] = useState('');
 
-    const [conversationList, setConversationList] = useState([]);
-
     const [allData, setAllData] = useState([]);
     const [newGroupData, setNewGroupData] = useState([]);
     const [next, setNext] = useState(false);
     const [groupName, setGroupName] = useState('');
 
+    const { conversationList } = useOutletContext();
+    const { setConversationList } = useOutletContext();
     const { setReceiverPass } = useOutletContext();
     const { setRoomInfo } = useOutletContext();
     const { inputRef } = useOutletContext();
@@ -50,8 +52,8 @@ function Contact() {
             PhoneNo: result.PhoneNo,
             EmailID: result.EmailID,
         }
-        setChosenResult(newChosen);
 
+        setChosenResult(newChosen);
     }
 
     useEffect(() => {
@@ -179,9 +181,8 @@ function Contact() {
             })
     }
 
-
     useEffect(() => {
-        if (conversationList.length == 0 && userData !== '') {
+        if (conversationList.length === 0 && userData !== '') {
             axios.post('http://127.0.0.1:3002/contact', { userData })
                 .then(result => {
                     console.log(result);
@@ -192,6 +193,9 @@ function Contact() {
                                 conversation_id: element._id,
                                 senderInfo: element.participants[0],
                                 receiverInfo: element.participants[1],
+                                latestMessage: element.latestMessage,
+                                updatedAt: element?.latestMessage?.updatedAt || element?.updatedAt,
+
                             };
                             setConversationList((prev) => [newConversationData, ...prev]);
                         }
@@ -200,6 +204,8 @@ function Contact() {
                                 conversation_id: element._id,
                                 senderInfo: element.participants[1],
                                 receiverInfo: element.participants[0],
+                                latestMessage: element.latestMessage,
+                                updatedAt: element?.latestMessage?.updatedAt || element?.updatedAt,
                             };
                             setConversationList((prev) => [newConversationData, ...prev]);
                         }
@@ -220,7 +226,6 @@ function Contact() {
         }
     }
 
-
     return (
         <div className="w-full mx-auto mt-2 min-h-[84.6vh] max-h-[84.6vh]">
             <div className="flex flex-col w-full text-center items-center ">
@@ -231,7 +236,7 @@ function Contact() {
                             className="cursor-default flex w-full h-full p-2 rounded-[12px] justify-between items-center self-stretch"
                         >
                             <div className="cursor-text text-white text-lg font-bold">
-                                Chat
+                                Chats
                             </div>
                             <div
                                 onClick={handleEdit}
@@ -371,33 +376,75 @@ function Contact() {
                     </div>
                 </div>
                 <div className="container overflow-y-scroll no-scrollbar scroll-smooth max-h-[4.2in] ">
-                    {
-                        conversationList.map((result, id) => {
-                            return <div
-                                key={id}
-                                data={result}
-                                className="container flex cursor-pointer p-2 gap-3 mt-3 mx-auto w-[95%] rounded-xl bg-slate-700 bg-opacity-95 shadow-slate-500 drop-shadow shadow-sm hover:bg-slate-800 duration-150"
-                                onClick={() => { conversationHandler(result) }}
-                            >
-                                <div className="container w-1/6 rounded-full">
-                                    <div className='curser-pointer mt-1 hover:font-bold transition-none duration-100 right-0'>
-                                        <img
-                                            className='w-9'
-                                            src={UserIcon}
-                                        />
+                    {(() => {
+                        let lastDate = null;
+
+                        return conversationList
+                            .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
+                            .map((result, id) => {
+                                const now = new Date(result.updatedAt);
+                                const date = now.toLocaleDateString();
+                                const time = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+
+                                lastDate = date;
+                                return <div
+                                    key={id}
+                                    data={result}
+                                    className="container flex cursor-pointer p-2 gap-3 mt-3 mx-auto w-[95%] rounded-xl bg-slate-700 bg-opacity-95 shadow-slate-500 drop-shadow shadow-sm hover:bg-slate-800 duration-150"
+                                    onClick={() => { conversationHandler(result) }}
+                                >
+                                    <div className="w-1/6 rounded-full flex flex-col justify-center">
+                                        <div className='curser-pointer w-full'>
+                                            <img
+                                                className='w-9'
+                                                src={UserIcon}
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="container flex flex-col w-4/6 text-left gap-1">
+                                        <h1 className='text-base font-bold'>
+                                            {result.receiverInfo.UserName}
+                                        </h1>
+                                        <div className='text-[12px] truncate'>
+                                            {
+                                                result.latestMessage
+                                                    ?
+                                                    !result.latestMessage.message
+                                                        ?
+                                                        !result.latestMessage.image
+                                                            ?
+                                                            !result.latestMessage.video
+                                                                ?
+                                                                'No Messages'
+                                                                :
+                                                                (
+                                                                    <div className='flex gap-1 '>
+                                                                        <span className='text-sm'><RiFolderVideoLine /></span>
+                                                                        Video
+                                                                    </div>
+                                                                )
+                                                            :
+                                                            (
+                                                                <div className='flex gap-1 '>
+                                                                    <span className='text-sm'><FaRegImage /></span>
+                                                                    Image
+                                                                </div>
+                                                            )
+                                                        :
+                                                        result.latestMessage.message
+                                                    :
+                                                    'No Messages'
+                                            }
+                                        </div>
+                                    </div>
+                                    <div className="container flex flex-col w-1/6 text-right m-1 gap-1">
+                                        <h1 className='text-[11px]'>
+                                            {time && time}
+                                        </h1>
                                     </div>
                                 </div>
-                                <div className="container flex flex-col w-5/6 text-left gap-1">
-                                    <h1 className='text-base font-bold'>
-                                        {result.receiverInfo.UserName}
-                                    </h1>
-                                    <p className='text-sm'>
-                                        messages
-                                    </p>
-                                </div>
-                            </div>
-                        })
-                    }
+                            })
+                    })()}
                 </div>
             </div>
         </div>
