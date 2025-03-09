@@ -98,7 +98,7 @@ io.on('connection', (socket) => {
     socket.on('load more messages', async ({ roomId, page }) => {
         try {
             const limit = 50;
-    
+
             const messages = await conversationModel.findOne({ _id: roomId })
                 .populate({
                     path: "messages",
@@ -109,11 +109,11 @@ io.on('connection', (socket) => {
                         select: "_id UserName EmailID PhoneNo",
                     }
                 });
-    
+
             if (!messages) return;
-    
+
             socket.emit('more messages', { messages });
-    
+
         } catch (err) {
             console.log("Error in 'load more messages' event:", err);
         }

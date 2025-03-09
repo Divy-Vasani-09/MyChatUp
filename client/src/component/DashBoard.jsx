@@ -32,36 +32,57 @@ export default function DashBoard() {
   const [socket, setSocket] = useState(null);
 
   useEffect(() => {
-    if (socket) return;
+    if (socket && !roomInfo) return console.log("socket true"); // Prevent duplicate connections
 
     const newSocket = socketClient('http://localhost:3002', {
       query: { userId: userData._id },
-      reconnect: true,
+      reconnection: true,  // This is true by default
       reconnectionAttempts: 5,
       reconnectionDelay: 1000,
     });
-    setSocket(newSocket);
-    setChats(null);
+
+    setSocket(newSocket); // Store in state
 
     newSocket.on("connect", () => {
       console.log("Socket Connected:", newSocket.id);
       newSocket.emit('user_online', { userId });
     });
+    console.log("Socket ID:", newSocket.id);
+    console.log("Socket Connected?:", newSocket.connected);
+
+    if (roomInfo?.conversation_id) {
+      console.log('Joining room');
+      newSocket.emit('join room', roomInfo);
+    }
+
 
     newSocket.on("disconnect", (reason) => {
       console.log("Socket Disconnected:", reason);
     });
 
+    newSocket.on("reconnect_attempt", (attempt) => {
+      console.log(`Reconnection attempt ${attempt}`);
+    });
+
+    newSocket.on("reconnect", (attempt) => {
+      console.log(`Reconnected successfully after ${attempt} attempts`);
+    });
+
+    newSocket.on("reconnect_failed", () => {
+      console.log("Reconnection failed");
+    });
+
     return () => {
+      console.log("Cleaning up socket...");
+      newSocket.off(); // Removes all event listeners
       newSocket.disconnect();
-      console.log("Socket Disconnected on Unmount");
     };
-  }, [])
+  }, []);
+
 
   useEffect(() => {
     if (!socket) return;
     const handleNew_Message = async (data) => {
-      // alert(data.receiveNewMessage.message + " from " + data.receiveNewMessage.sender.UserName);
       setConversationList(prevList =>
         prevList.map(obj =>
           obj.conversation_id === "67c00e48f46ebba7d880ef7d"
@@ -99,7 +120,6 @@ export default function DashBoard() {
     setRoomId(roomInfo?.conversation_id)
     if (roomInfo?.conversation_id) {
       socket.emit('join room', roomInfo);
-      console.log("lastSeen: ", roomInfo.receiverInfo.lastSeen);
 
       let lastSeen = roomInfo?.receiverInfo?.lastSeen
       const date = new Date(lastSeen).toLocaleDateString();
@@ -114,8 +134,6 @@ export default function DashBoard() {
         lastSeen = `Today at ${time}`;
       }
       setStatus(prev => ({ ...prev, online: roomInfo.receiverInfo.online, lastSeen: lastSeen }));
-
-      console.log(roomInfo.receiverInfo._id)
     }
   }, [roomInfo, socket]);
 
@@ -134,8 +152,8 @@ export default function DashBoard() {
         if (data.messages.messages.length === 0) {
           setHasMore(false);
           setLoadMoreMessage(false);
-        } else {
-          
+        }
+        else {
           const chat = data.messages.messages;
           setChats((prev) => [...chat, ...prev]);
           setPage((prev) => prev + 1);
@@ -153,10 +171,9 @@ export default function DashBoard() {
 
   useEffect(() => {
     if (!socket || !roomInfo || !roomInfo.receiverInfo) {
-      console.log("Socket or roomInfo is not ready");
+      console.log("Socket or roomInfo is not ready for status!");
       return;
     }
-    console.log("Setting up user_online listener");
 
     const handleUser_online = async ({ userId, online, lastSeen }) => {
       console.log("online");
@@ -168,8 +185,6 @@ export default function DashBoard() {
         const tDate = new Date().toLocaleDateString();
 
         if (date == tDate) {
-          console.log(date);
-
           lastSeen = `Today at ${time}`;
         }
 
@@ -198,7 +213,7 @@ export default function DashBoard() {
 
   const sendMessage = () => {
     socket.emit('sendNewMessage', { newMessage, newImageMessage, newVideoMessage, roomInfo });
-    console.log("emit called");
+    console.log("send message emit called");
 
     setNewImageMessage([]);
     setNewVideoMessage([]);
@@ -227,24 +242,6 @@ export default function DashBoard() {
       socket.off('receiveNewMessage', handleNewMessage);
     };
   });
-
-  // useEffect(() => {
-
-  //   const handleUserOnline = ({ userId, online }) => {
-  //     console.log("User Online Event Received:", userId, online);
-  //     console.log("Current Room Info:", roomInfo);
-
-  //     if (roomInfo?.receiverInfo?._id === userId) {
-  //       console.log("Receiver is online: ", online);
-  //     }
-  //   };
-
-  //   return () => {
-  //     console.log("Removing user_online listener");
-  //     socket.off("user_online", handleUserOnline);
-  //   };
-  // }, [socket, roomInfo]);
-
 
   return (
     <div className='text-white flex bg-white'>

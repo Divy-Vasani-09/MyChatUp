@@ -12,7 +12,15 @@ import { IoSendSharp } from "react-icons/io5";
 import EmojiPicker from 'emoji-picker-react';
 import { useSearchParams } from 'react-router-dom';
 
-export default function ChatInput({ roomInfo, inputRef, setNewMessage, setNewImageMessage, setNewVideoMessage, chats, }) {
+export default function ChatInput({
+    roomInfo,
+    inputRef,
+    setNewMessage,
+    setNewImageMessage,
+    setNewVideoMessage,
+    chats,
+    setScrollMessages,
+}) {
 
     const [inputOfMessage, setInputOfMessage] = useState('');
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
@@ -180,6 +188,7 @@ export default function ChatInput({ roomInfo, inputRef, setNewMessage, setNewIma
             setNewMessage(inputOfMessage);
             setNewImageMessage(selectedImages);
             setNewVideoMessage(selectedVideos);
+            setScrollMessages(true)
             setLoader(true);
         }
 
@@ -374,7 +383,7 @@ export default function ChatInput({ roomInfo, inputRef, setNewMessage, setNewIma
                         <div
                             className="my-auto mx-2 text-2xl text-slate-300 bg-slate-800 p-1 hover:text-slate-200 hover:bg-slate-950 duration-300"
                         >
-                            <Loader />
+                            <Loader size={20}/>
                         </div>
                     </div>
                     :

@@ -1,6 +1,14 @@
 import React, { useEffect, useRef, useState } from 'react'
 
-export default function Messages({ chats, userData, loadMoreMessage, setLoadMoreMessage, hasMore }) {
+export default function Messages({
+  chats,
+  userData,
+  loadMoreMessage,
+  setLoadMoreMessage,
+  hasMore,
+  scrollMessages,
+  setScrollMessages,
+}) {
   const messagesEndRef = useRef(null);
   const chatContainerRef = useRef(null);
   const [scroll, setScroll] = useState(true);
@@ -19,26 +27,39 @@ export default function Messages({ chats, userData, loadMoreMessage, setLoadMore
     setIsFullscreen(!isFullscreen);
   };
 
+  // useEffect(() => {
+  //   if (!loadMoreMessage && messagesEndRef.current) {
+  //     setTimeout(() => {
+  //       messagesEndRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
+  //       chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+  //     }, 500);
+  //   }
+  // }, [chats])
+
   useEffect(() => {
-    if (!loadMoreMessage && messagesEndRef.current) {
-      setTimeout(() => {
+    if (loadMoreMessage) return;
+
+    setTimeout(() => {
+      if (messagesEndRef.current && scrollMessages) {
         messagesEndRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
-        chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
-      }, 500);
-    }
-  }, [chats])
+      }
+    }, 500);
+  }, [chats]);
 
   const handleScroll = () => {
     if (chatContainerRef.current.scrollTop === 0 && hasMore) {
-      setLoadMoreMessage(true)
+      setLoadMoreMessage(true);
+      setScroll(false)
+      setScrollMessages(false)
+
       const previousOffset = getScrollOffset();
+
       setTimeout(() => {
         restoreScrollPosition(previousOffset);
         setLoadMoreMessage(false);
       }, 200);
     }
   };
-
   const getScrollOffset = () => {
     if (chatContainerRef.current) {
       return chatContainerRef.current.scrollHeight - chatContainerRef.current.scrollTop;
@@ -46,7 +67,6 @@ export default function Messages({ chats, userData, loadMoreMessage, setLoadMore
     return 0;
   };
 
-  // Function to restore the scroll position after loading messages
   const restoreScrollPosition = (previousOffset) => {
     if (chatContainerRef.current) {
       chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight - previousOffset;
