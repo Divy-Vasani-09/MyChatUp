@@ -4,11 +4,14 @@ import ChatInput from './ChatInput';
 import Messages from './Messages';
 
 export default function ChatBox({
+  socket,
   userData,
   receiverPass,
   roomInfo,
+  setRoomInfo,
   status,
   chats,
+  setChats,
   loadMoreMessage,
   setLoadMoreMessage,
   hasMore,
@@ -17,7 +20,7 @@ export default function ChatBox({
   setNewVideoMessage,
   inputRef,
 }) {
-  const [scrollMessages, setScrollMessages] = useState(true)
+  const [scrollMessages, setScrollMessages] = useState(true);
 
   return (
     <div className='w-full h-full mx-1 rounded-xl border-[0.1px] border-slate-700'>
@@ -27,8 +30,13 @@ export default function ChatBox({
           <>
             <div className="w-full h-[8.4%] mx-auto p-1 bg-slate-800 rounded-t-xl border-b-[0.2px] border-slate-700">
               <ChatBoxHeader
+                socket={socket}
+                userData={userData}
                 roomInfo={roomInfo}
+                setRoomInfo={setRoomInfo}
                 status={status}
+                chats={chats}
+                setChats={setChats}
               />
             </div>
             <div className="w-full h-5/6">
@@ -44,6 +52,7 @@ export default function ChatBox({
             </div>
             <div className="w-full h-[8.4%] mx-auto p-1 bg-slate-800 rounded-b-xl border-t-[0.2px] border-slate-700">
               <ChatInput
+                userData={userData}
                 roomInfo={roomInfo}
                 inputRef={inputRef}
                 setNewMessage={setNewMessage}

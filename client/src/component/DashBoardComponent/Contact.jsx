@@ -14,9 +14,12 @@ const animatedComponents = makeAnimated();
 function Contact() {
     const userData = JSON.parse(sessionStorage.getItem("userLoggedData"));
     const [isOpen, setIsOpen] = useState(false);
+    const editRef = useRef();
 
     const [newChat, setNewChat] = useState(false);
+    const newChatRef = useRef();
     const [newGroup, setNewGroup] = useState(false);
+    const newGroupRef = useRef();
     const [searchResults, setSearchResults] = useState([]);
     const [chosenResult, setChosenResult] = useState('');
 
@@ -39,6 +42,51 @@ function Contact() {
         setNewGroupData([]);
         setGroupName('');
     }
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (editRef.current && !editRef.current.contains(event.target)) {
+                setIsOpen(false);
+            }
+        };
+
+        if (isOpen) {
+            document.addEventListener("mousedown", handleClickOutside);
+        }
+
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, [isOpen]);
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (newChatRef.current && !newChatRef.current.contains(event.target)) {
+                setNewChat(false);
+            }
+        };
+
+        if (newChat) {
+            document.addEventListener("mousedown", handleClickOutside);
+        }
+
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, [newChat]);
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (newGroupRef.current && !newGroupRef.current.contains(event.target)) {
+                setNewGroup(false);
+            }
+        };
+
+        if (newGroup) {
+            document.addEventListener("mousedown", handleClickOutside);
+        }
+
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, [newGroup]);
 
     const newChatHandler = () => {
         setIsOpen(false);
@@ -194,9 +242,10 @@ function Contact() {
                                 senderInfo: element.participants[0],
                                 receiverInfo: element.participants[1],
                                 latestMessage: element.latestMessage,
+                                blockedIds: element.blockedIds,
                                 updatedAt: element?.latestMessage?.updatedAt || element?.updatedAt,
-
                             };
+
                             setConversationList((prev) => [newConversationData, ...prev]);
                         }
                         if (element.participants[1].EmailID === userData.EmailID) {
@@ -205,6 +254,7 @@ function Contact() {
                                 senderInfo: element.participants[1],
                                 receiverInfo: element.participants[0],
                                 latestMessage: element.latestMessage,
+                                blockedIds: element.blockedIds,
                                 updatedAt: element?.latestMessage?.updatedAt || element?.updatedAt,
                             };
                             setConversationList((prev) => [newConversationData, ...prev]);
@@ -246,7 +296,10 @@ function Contact() {
                             </div>
                         </div>
                         {isOpen && (
-                            <div className="mt-2 bg-[#1d2024] w-full">
+                            <div
+                                ref={editRef}
+                                className="mt-2 bg-[#1d2024] w-full"
+                            >
                                 <ul className="absolute z-10 bg-[#1e2125] flex flex-col w-10/12 right-0 ">
                                     <li
                                         onClick={newChatHandler}
@@ -274,11 +327,15 @@ function Contact() {
                         {
                             newChat &&
                             <>
-                                <div className="mt-2 bg-[#272B30] rounded-[12px] w-1/4">
+                                <div
+                                    ref={newChatRef}
+                                    className="mt-2 bg-[#272B30] rounded-[12px] w-1/4"
+                                >
                                     <ul className="absolute z-10 bg-[#272B30] w-full rounded-[12px]">
                                         <SearchBarNewChat
                                             setSearchResults={setSearchResults}
                                             userData={userData}
+                                            newChat={newChat}
                                         />
                                         <div className="container">
                                             <div
@@ -306,7 +363,10 @@ function Contact() {
                         {
                             newGroup &&
                             <>
-                                <div className="mt-2 bg-slate-800 rounded-[12px] w-1/4">
+                                <div
+                                    ref={newGroupRef}
+                                    className="mt-2 bg-slate-800 rounded-[12px] w-1/4"
+                                >
                                     <div className="absolute z-10 bg-slate-800 w-full rounded-[12px]">
                                         {
                                             next
@@ -396,8 +456,8 @@ function Contact() {
                                     <div className="w-1/6 rounded-full flex flex-col justify-center">
                                         <div className='curser-pointer w-full'>
                                             <img
-                                                className='w-9'
-                                                src={UserIcon}
+                                                className='w-9 h-9 rounded-full'
+                                                src={!result.receiverInfo.DP ? UserIcon : result.receiverInfo.DP}
                                             />
                                         </div>
                                     </div>

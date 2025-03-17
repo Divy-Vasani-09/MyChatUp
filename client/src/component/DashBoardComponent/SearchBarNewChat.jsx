@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import axios from 'axios'
 import { FaSearch } from 'react-icons/fa'
 
-const SearchBarNewChat = ({ setSearchResults, userData}) => {
+const SearchBarNewChat = ({ setSearchResults, userData, newChat }) => {
     const [input, setInput] = useState("");
     useEffect(() => {
         const delayToCall = setTimeout(() => {
@@ -25,6 +25,13 @@ const SearchBarNewChat = ({ setSearchResults, userData}) => {
     const searchHandler = (value) => {
         setInput(value);
     }
+
+    useEffect(() => {
+        if (!newChat) {
+            setSearchResults([]);
+        }
+    }, [newChat])
+
 
     return (
         <div>

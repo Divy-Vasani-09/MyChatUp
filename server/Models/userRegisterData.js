@@ -1,27 +1,37 @@
 const mongoose = require("mongoose");
 
 const useRegisterSchema = new mongoose.Schema({
+    DP: {
+        type: String,
+        trim: true,
+        default: null,
+    },
     UserName: {
         type: String,
         required: true,
-        trim: true
+        trim: true,
     },
     EmailID: {
         type: String,
         required: true,
         unique: true,
         lowercase: true,
-        trim: true
+        trim: true,
     },
     PhoneNo: {
         type: String,
         required: true,
         unique: true,
-        trim: true
+        trim: true,
+    },
+    About: {
+        type: String,
+        trim: true,
+        default: "",
     },
     Password: {
         type: String,
-        required: true
+        required: true,
     },
     
     online: {

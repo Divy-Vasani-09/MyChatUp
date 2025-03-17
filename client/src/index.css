@@ -8,10 +8,11 @@
     }
 
     .no-scrollbar {
-        -ms-overflow-style: none;  
-        scrollbar-width: none;  
-  }
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
 }
+
 ::-webkit-scrollbar {
     width: 4px;
 }
@@ -23,19 +24,19 @@
 
 /* Handle */
 ::-webkit-scrollbar-thumb {
-    background: #566172;
+    background: #3c4a5f;
     border-radius: 5px;
 }
 
 /* Handle on hover */
 ::-webkit-scrollbar-thumb:hover {
-    background: #435168;
+    background: #50617b;
 }
 
-/* .custom-emoji-picker .emoji-group {
+.custom-emoji-picker .emoji-group {
     display: none;
-  }
-  .custom-emoji-picker .emoji-preview {
-    display: none; 
-  } */
-  
+}
+
+.custom-emoji-picker .emoji-preview {
+    display: none;
+}

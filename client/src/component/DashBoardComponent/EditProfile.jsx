@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { userNameRegex, emailIdRegex, phoneNoRegex, passwordRegex } from '../Regexes';
 import { Link, useNavigate } from 'react-router-dom';
 import { IoArrowBack } from "react-icons/io5";
+import { ToastContainer, toast } from 'react-toastify';
 import axios from 'axios';
 
 export default function EditProfile() {
@@ -10,6 +11,7 @@ export default function EditProfile() {
         UserName: false,
         EmailID: false,
         PhoneNo: false,
+        About: false,
     }
 
     const [inputValues, setInputValues] = useState(defaultInputValues);
@@ -47,6 +49,7 @@ export default function EditProfile() {
                 console.log(result)
                 const userData = JSON.stringify(result.data.user)
                 sessionStorage.setItem("userLoggedData", userData)
+                setTimeout(() => toast.success("Successfully Updated!"), 50);
                 navigate("/DashBoard/profile")
             })
             .catch(err => console.log(err))
@@ -118,6 +121,21 @@ export default function EditProfile() {
                         {inputValuesErr.PhoneNo === true && <p className='text-red-600'>{inputValues.PhoneNo === '' ? 'Enter Your Phone Number' : 'Your Phone Number is InValid'}</p>}
                     </div>
 
+                    <div className="container w-full my-2 mx-auto flex flex-col justify-center">
+                        <div className='text-xs ml-4 mt-1 font-bold text-slate-100'>
+                            About
+                        </div>
+                        <input
+                            type='text'
+                            maxLength={50}
+                            placeholder='About'
+                            name='About'
+                            value={inputValues.About}
+                            onChange={inputValueHandler}
+                            className={`font-normal text-base bg-slate-950 mx-auto py-1 px-3 rounded-xl w-11/12 outline-none drop-shadow shadow-sm hover:shadow-slate-300 border-2 border-solid ${inputValuesErr.UserName === true ? showErrorInBorder : unShowErrorInBorder} duration-300`}
+                        >
+                        </input>
+                    </div>
 
                     <div className="container w-full my-3 mx-auto flex flex-col justify-center">
                         <button

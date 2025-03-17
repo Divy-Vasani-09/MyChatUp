@@ -35,11 +35,18 @@ const messageSchema = mongoose.Schema({
             message: 'Message con not be empty',
         },]
     },
+    unActiveIds: [
+        {
+            type: [mongoose.Schema.Types.ObjectId],
+            ref: "userRegisteredData",
+            default: [],
+        }
+    ],
     createdAt: {
         type: Date,
         default: Date.now,
     },
-},{
+}, {
     timestamps: true,
 })
 

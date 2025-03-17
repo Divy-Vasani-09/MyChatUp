@@ -20,6 +20,13 @@ const conversationSchema = new mongoose.Schema({
         ref: "messageData",
         default: null,
     },
+    blockedIds: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "userRegisteredData",
+            default: [],
+        }
+    ],
 },
     {
         timestamps: true,

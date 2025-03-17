@@ -4,6 +4,7 @@ import { Outlet, useSearchParams } from 'react-router-dom';
 import { ToastContainer, toast } from 'react-toastify';
 import ChatBox from './DashBoardComponent/ChatComponents/ChatBox';
 import socketClient from 'socket.io-client';
+import AgoraRTC from "agora-rtc-sdk-ng";
 import axios from 'axios';
 
 export default function DashBoard() {
@@ -43,18 +44,31 @@ export default function DashBoard() {
 
     setSocket(newSocket); // Store in state
 
-    newSocket.on("connect", () => {
+    newSocket.on("connect", async () => {
       console.log("Socket Connected:", newSocket.id);
       newSocket.emit('user_online', { userId });
     });
     console.log("Socket ID:", newSocket.id);
     console.log("Socket Connected?:", newSocket.connected);
 
-    if (roomInfo?.conversation_id) {
-      console.log('Joining room');
+    if (roomInfo?.conversation_id && !socket) {
       newSocket.emit('join room', roomInfo);
-    }
+      console.log("re join called");
 
+      let lastSeen = roomInfo?.receiverInfo?.lastSeen
+      const date = new Date(lastSeen).toLocaleDateString();
+      const time = new Date(lastSeen).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+      const tDate = new Date().toLocaleDateString();
+
+      if (lastSeen) {
+        lastSeen = `${date} ${time}`;
+      }
+      if (date == tDate) {
+        lastSeen = `Today at ${time}`;
+      }
+      setStatus(prev => ({ ...prev, online: roomInfo.receiverInfo.online, lastSeen: lastSeen }));
+    }
 
     newSocket.on("disconnect", (reason) => {
       console.log("Socket Disconnected:", reason);
@@ -144,6 +158,11 @@ export default function DashBoard() {
       setChats(chat);
       console.log("room joined");
     };
+    const handleClearChat = (data) => {
+      const chat = data.messages[0].messages;
+      setChats(chat);
+      console.log("Clear chat!");
+    };
 
     if (loadMoreMessage) {
       socket.emit("load more messages", { roomId, page: page + 1 });
@@ -155,6 +174,7 @@ export default function DashBoard() {
         }
         else {
           const chat = data.messages.messages;
+
           setChats((prev) => [...chat, ...prev]);
           setPage((prev) => prev + 1);
           setLoadMoreMessage(false);
@@ -163,9 +183,11 @@ export default function DashBoard() {
     }
 
     socket.on('joined', handleJoined);
+    socket.on('clearChat', handleClearChat);
 
     return () => {
       socket.off('joined', handleJoined);
+      socket.off('clearChat', handleClearChat);
     }
   });
 
@@ -270,11 +292,14 @@ export default function DashBoard() {
       </div>
       <div className="container w-9/12 flex min-h-[88vh] max-h-[89vh] p-1 py-2 gap-3 bg-slate-900 ">
         <ChatBox
+          socket={socket}
           userData={userData}
           receiverPass={receiverPass}
           roomInfo={roomInfo}
+          setRoomInfo={setRoomInfo}
           status={status}
           chats={chats}
+          setChats={setChats}
           loadMoreMessage={loadMoreMessage}
           setLoadMoreMessage={setLoadMoreMessage}
           hasMore={hasMore}

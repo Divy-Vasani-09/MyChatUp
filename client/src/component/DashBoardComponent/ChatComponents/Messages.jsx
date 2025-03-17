@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
+import LoaderOfNewMessages from './LoaderOfNewMessages';
 
 export default function Messages({
   chats,
@@ -11,7 +12,6 @@ export default function Messages({
 }) {
   const messagesEndRef = useRef(null);
   const chatContainerRef = useRef(null);
-  const [scroll, setScroll] = useState(true);
 
   const [isFullscreen, setIsFullscreen] = useState(false);
   const imageRefs = useRef([]);
@@ -27,15 +27,6 @@ export default function Messages({
     setIsFullscreen(!isFullscreen);
   };
 
-  // useEffect(() => {
-  //   if (!loadMoreMessage && messagesEndRef.current) {
-  //     setTimeout(() => {
-  //       messagesEndRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
-  //       chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
-  //     }, 500);
-  //   }
-  // }, [chats])
-
   useEffect(() => {
     if (loadMoreMessage) return;
 
@@ -46,30 +37,28 @@ export default function Messages({
     }, 500);
   }, [chats]);
 
-  const handleScroll = () => {
+  const handleScroll = async () => {
     if (chatContainerRef.current.scrollTop === 0 && hasMore) {
       setLoadMoreMessage(true);
-      setScroll(false)
       setScrollMessages(false)
 
-      const previousOffset = getScrollOffset();
+      const chatContainer = chatContainerRef.current;
+      const previousScrollHeight = chatContainer.scrollHeight;
+
+      chatContainer.style.scrollBehavior = "auto";
 
       setTimeout(() => {
-        restoreScrollPosition(previousOffset);
         setLoadMoreMessage(false);
-      }, 200);
-    }
-  };
-  const getScrollOffset = () => {
-    if (chatContainerRef.current) {
-      return chatContainerRef.current.scrollHeight - chatContainerRef.current.scrollTop;
-    }
-    return 0;
-  };
 
-  const restoreScrollPosition = (previousOffset) => {
-    if (chatContainerRef.current) {
-      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight - previousOffset;
+        requestAnimationFrame(() => {
+          const newScrollHeight = chatContainer.scrollHeight;
+          chatContainer.scrollTop = newScrollHeight - previousScrollHeight;
+
+          setTimeout(() => {
+            chatContainer.style.scrollBehavior = "smooth";
+          }, 100);
+        });
+      }, 500);
     }
   };
 
@@ -86,16 +75,26 @@ export default function Messages({
           :
           <div
             ref={chatContainerRef}
-            className='w-full h-full overflow-y-auto scroll-smooth'
+            id='chat-container'
+            className='w-full h-full overflow-y-auto scroll-smooth '
             onScroll={handleScroll}
           >
+            {
+              loadMoreMessage && (
+                <div className='flex justify-center'>
+                  <div className='p-1 text-center mx-auto '>
+                    <LoaderOfNewMessages />
+                  </div>
+                </div>
+              )
+            }
             {(() => {
               let lastDate = null;
 
               return chats
-                .sort((a, b) => new Date(a.updatedAt) - new Date(b.updatedAt))
+                .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
                 .map((result, id) => {
-                  const now = new Date(result.updatedAt);
+                  const now = new Date(result.createdAt);
                   const date = now.toLocaleDateString();
                   const time = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
@@ -120,9 +119,13 @@ export default function Messages({
                               result.image
                                 ?
                                 <div className='flex flex-col'>
-                                  <img src={result.image}
+                                  <img
+                                    src={result.image}
                                     ref={(el) => (imageRefs.current[id] = el)}
-                                    onClick={() => handleFullscreenClick(id)} alt="" className='p-1 w-32 whitespace-pre-line' />
+                                    onClick={() => handleFullscreenClick(id)}
+                                    className='p-1 w-32 whitespace-pre-line'
+                                  />
+
                                   <div className='text-xs text-slate-300 flex justify-end'>
                                     {time}
                                   </div>
