@@ -1,21 +1,22 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import './index.css'
-import App from './App.jsx'
-import { createBrowserRouter, RouterProvider } from 'react-router-dom';
-import Navbar from './component/Navbar';
-import Welcome from './Welcome.jsx';
-import Registration from './component/Registration.jsx';
-import Login from './component/login';
-import ForgotPassword from './component/ForgotPassword';
-import DashBoard from './component/DashBoard';
-import Contact from './component/DashBoardComponent/Contact';
-import Call from './component/DashBoardComponent/Call.jsx';
-import Setting from './component/DashBoardComponent/Setting.jsx';
-import Profile from './component/DashBoardComponent/Profile';
-import EditProfile from './component/DashBoardComponent/EditProfile.jsx';
-import ChatBox from './component/DashBoardComponent/ChatComponents/ChatBox.jsx';
-import { ToastContainer, toast } from 'react-toastify';
+import { StrictMode } from "react"
+import { createRoot } from "react-dom/client"
+import "./index.css"
+import App from "./App.jsx"
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import Navbar from "./component/Navbar";
+import Welcome from "./Welcome.jsx";
+import Registration from "./component/Registration.jsx";
+import Login from "./component/login";
+import ForgotPassword from "./component/ForgotPassword";
+import DashBoard from "./component/DashBoard";
+import Contact from "./component/DashBoardComponent/Contact";
+import CallHistory from "./component/DashBoardComponent/CallHistory.jsx";
+import Setting from "./component/DashBoardComponent/Setting.jsx";
+import Profile from "./component/DashBoardComponent/Profile";
+import EditProfile from "./component/DashBoardComponent/EditProfile.jsx";
+import ChatBox from "./component/DashBoardComponent/ChatComponents/ChatBox.jsx";
+import { ToastContainer, toast } from "react-toastify";
+
 
 const router = createBrowserRouter([
   {
@@ -24,7 +25,7 @@ const router = createBrowserRouter([
     children: [
       {
         path: "/",
-        element: <><Navbar /><Welcome /></>,
+        element: <Login />
       },
       {
         path: "/registration",
@@ -40,7 +41,7 @@ const router = createBrowserRouter([
       },
       {
         path: "/DashBoard",
-        element: <><Navbar /><DashBoard /></>,
+        element: <DashBoard />,
         children: [
           {
             path: "contact",
@@ -54,7 +55,7 @@ const router = createBrowserRouter([
           },
           {
             path: "call",
-            element: <Call />
+            element: <CallHistory />
           },
           {
             path: "setting",
@@ -75,14 +76,14 @@ const router = createBrowserRouter([
 
 ])
 
-createRoot(document.getElementById('root')).render(
+createRoot(document.getElementById("root")).render(
   <>
     {/* <StrictMode> */}
     <RouterProvider router={router} />
     <div>
       <ToastContainer
         stacked
-        position="top-center"
+        position="top-right"
         autoClose={3000}
         hideProgressBar
         newestOnTop={false}

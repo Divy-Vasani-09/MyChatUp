@@ -1,16 +1,17 @@
-import React, { useEffect, useState } from 'react'
-import { useRef } from 'react';
-import Loader from './Loader';
-import axios from 'axios';
+import React, { useEffect, useState } from "react"
+import { useRef } from "react";
+import { ToastContainer, toast } from "react-toastify";
+import Loader from "./Loader";
+import axios from "axios";
 
-import { FaRegSmile } from "react-icons/fa";
+import { BsEmojiSmileFill } from "react-icons/bs";
 import { FaPaperclip } from "react-icons/fa6";
 import { FaRegImage } from "react-icons/fa6";
 import { RiFolderVideoLine } from "react-icons/ri";
 import { IoSendSharp } from "react-icons/io5";
 
-import EmojiPicker from 'emoji-picker-react';
-import { useSearchParams } from 'react-router-dom';
+import EmojiPicker from "emoji-picker-react";
+import { useSearchParams } from "react-router-dom";
 
 export default function ChatInput({
     userData,
@@ -22,7 +23,7 @@ export default function ChatInput({
     chats,
     setScrollMessages,
 }) {
-    const blockIds = roomInfo.blockedIds;
+    const blockIds = roomInfo?.blockedIds || [];
     const checkBlockStatus = () => {
         if (blockIds.length < 0) {
             return false;
@@ -36,13 +37,13 @@ export default function ChatInput({
     }
     const isBlock = checkBlockStatus();
 
-    const [inputOfMessage, setInputOfMessage] = useState('');
+    const [inputOfMessage, setInputOfMessage] = useState("");
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
     const [showFileOptions, setShowFileOptions] = useState(false);
     const [showSelectedImage, setShowSelectedImage] = useState(false);
     const [selectedImages, setSelectedImages] = useState([]);
-    const [sizeLimitError, setsizeLimitError] = useState('');
+    const [sizeLimitError, setsizeLimitError] = useState("");
     const [showSelectedVideo, setShowSelectedVideo] = useState(false);
     const [selectedVideos, setSelectedVideos] = useState([]);
     const [loader, setLoader] = useState(false);
@@ -62,7 +63,7 @@ export default function ChatInput({
     }
     const handleEmoji = (e) => {
         setInputOfMessage((prev) => prev + e.emoji);
-        inputRef.current.focus();
+        // inputRef.current.focus();
     }
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -104,12 +105,12 @@ export default function ChatInput({
     const handleImageUpload = (e) => {
         e.preventDefault();
         imageUploadRef.current.click();
-        setsizeLimitError('')
+        setsizeLimitError("")
     }
     const handleVideoUpload = (e) => {
         e.preventDefault();
         videoUploadRef.current.click();
-        setsizeLimitError('')
+        setsizeLimitError("")
     }
 
     const handleImageInput = (e) => {
@@ -120,6 +121,7 @@ export default function ChatInput({
             const validFiles = files.filter(file => file.size <= maxSize);
 
             if (validFiles.length !== files.length) {
+                toast.error("Please upload images under 1MB!");
                 return setsizeLimitError("Please upload images under 1MB!");
             }
 
@@ -135,9 +137,13 @@ export default function ChatInput({
                     setSelectedImages(base64Images); // Store Base64 images for preview
                     setShowFileOptions(false);
                     setShowSelectedImage(true);
+                    inputRef.current.focus();
                 })
                 .catch(error => console.error("Error converting images:", error));
-            inputRef.current.focus();
+            if (inputRef?.current) {
+                inputRef.current.focus();
+                console.log("ready")
+            }
         }
     };
     const handleVideoInput = (e) => {
@@ -148,6 +154,7 @@ export default function ChatInput({
             const validFiles = files.filter(file => file.size <= maxSize);
 
             if (validFiles.length !== files.length) {
+                toast.error("Please upload videos under 10MB!");
                 setsizeLimitError("Please upload videos under 10MB!");
                 return;
             }
@@ -166,6 +173,10 @@ export default function ChatInput({
                     console.log(base64Videos)
                     setShowFileOptions(false);
                     setShowSelectedVideo(true);
+
+                    setTimeout(() => {
+            if (inputRef?.current) inputRef.current.focus();
+        }, 100);
                 })
                 .catch(error => console.error("Error converting videos:", error));
 
@@ -174,11 +185,15 @@ export default function ChatInput({
     };
     useEffect(() => {
         const handleClickOutside = (event) => {
-            if (selectedRef.current && !selectedRef.current.contains(event.target)) {
+            const clickedOutsideSelected = selectedRef.current && !selectedRef.current.contains(event.target);
+            const clickedOutsideInput = inputRef.current && !inputRef.current.contains(event.target);
+    
+            // Only close if it's outside both
+            if (clickedOutsideSelected && clickedOutsideInput) {
                 setShowSelectedImage(false);
-                setSelectedImages();
+                setSelectedImages([]);
                 setShowSelectedVideo(false);
-                setSelectedVideos();
+                setSelectedVideos([]);
             }
         };
 
@@ -206,49 +221,69 @@ export default function ChatInput({
             setLoader(true);
         }
 
-        setInputOfMessage('');
+        setInputOfMessage("");
         setSelectedImages([]);
         setSelectedVideos([]);
         setShowSelectedImage(false);
         setShowSelectedVideo(false);
     }
 
+    if (inputRef?.current) {
+        inputRef.current.focus();
+        console.log("focus------");
+    }
+    
     return (
-        <div className='relative container w-full h-full flex justify-between'>
+        <div className="relative container w-full h-full flex justify-between gap-1 text-white">
+            <div className="">
+                <ToastContainer
+                    stacked
+                    position="top-right"
+                    autoClose={2000}
+                    // hideProgressBar
+                    newestOnTop={false}
+                    closeOnClick={true}
+                    pauseOnFocusLoss={false}
+                    draggable
+                    pauseOnHover
+                    theme="colored"
+                    className="mx-auto"
+                />
+            </div>
             {isBlock ?
                 <div
-                    className='
+                    className="
                     cursor-default
                     flex justify-center
-                    w-11/12 
+                    w-10/12 sm:w-11/12
                     mx-auto
                     text-red-500
                     bg-slate-800 
                     rounded-lg 
                     duration-300 
-                    '
+                    "
                 >
-                    You are Blocked! 
+                    You are Blocked!
                 </div>
                 :
                 (<>
                     <div
-                        className='
+                        className="
                         flex justify-around
                         w-11/12 
                         mx-auto 
                         bg-slate-800 
                         rounded-lg 
-                        drop-shadow shadow-sm hover:shadow-slate-300 
+                        sm:drop-shadow sm:shadow-sm hover:shadow-slate-300 
                         border-[0.1px] border-slate-600 
                         duration-300 
-                        '
+                        "
                     >
                         {
                             showEmojiPicker &&
                             <span
                                 ref={emojiPickerRef}
-                                className='absolute bottom-10 left-0'
+                                className="absolute bottom-20 sm:bottom-11 left-0"
                             >
                                 <EmojiPicker
                                     height={350}
@@ -258,44 +293,43 @@ export default function ChatInput({
                                     reactionsDefaultOpen={false}
                                     lazyLoad={false}
                                     onEmojiClick={handleEmoji}
-                                    className="custom-emoji-picker"
+                                    className="custom-emoji-picker sm:shadow-[10px_10px_50px_rgba(0,0,1,0.9)]"
                                     style={{
-                                        backgroundColor: '#0f172a', // Dark background color
-                                        borderRadius: '15px',
-                                        borderColor: '#1E293B', // Add rounded corners if needed
-                                        boxShadow: '10px 10px 50px rgba(0, 0, 1, 0.9)',
+                                        backgroundColor: "#0f172a", // Dark background color
+                                        borderRadius: "15px",
+                                        borderColor: "#1E293B", // Add rounded corners if needed
                                     }}
                                     emojiPickerStyle={{
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        alignItems: 'center',
-                                        backgroundColor: '#0f172a', // Dark theme background
-                                        borderRadius: '5px',
-                                        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+                                        display: "flex",
+                                        flexDirection: "column",
+                                        alignItems: "center",
+                                        backgroundColor: "#0f172a", // Dark theme background
+                                        borderRadius: "5px",
+                                        boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
                                     }}
                                     inputStyle={{
-                                        backgroundColor: '#0f172a', // Background color of the search input
-                                        color: '#fff',
+                                        backgroundColor: "#0f172a", // Background color of the search input
+                                        color: "#fff",
                                     }}
                                     searchStyle={{
-                                        backgroundColor: '#0f172a', // Background color of the search input
-                                        color: '#fff',           // Text color of the search input
-                                        padding: '8px 82px',     // Padding inside the search box
-                                        border: '0px solid #555',// Border color
-                                        borderRadius: '5px',     // Rounded corners
-                                        width: '90%',            // Width of the search box (adjustable)
-                                        marginBottom: '5px',    // Spacing below the search box
+                                        backgroundColor: "#0f172a", // Background color of the search input
+                                        color: "#fff",           // Text color of the search input
+                                        padding: "8px 82px",     // Padding inside the search box
+                                        border: "0px solid #555",// Border color
+                                        borderRadius: "5px",     // Rounded corners
+                                        width: "90%",            // Width of the search box (adjustable)
+                                        marginBottom: "5px",    // Spacing below the search box
                                     }}
                                     placeholderStyle={{
-                                        color: '#fff',           // Placeholder text color
-                                        fontStyle: 'italic',     // Italic placeholder text
+                                        color: "#fff",           // Placeholder text color
+                                        fontStyle: "italic",     // Italic placeholder text
                                     }}
                                     emojiCategoryButtonStyle={{
-                                        color: '#f1f1f1', // Text color for category buttons
-                                        backgroundColor: '#0f172a', // Button background color
-                                        padding: '98px 16px',
-                                        borderRadius: '25px',
-                                        marginBottom: '5px',
+                                        color: "#f1f1f1", // Text color for category buttons
+                                        backgroundColor: "#0f172a", // Button background color
+                                        padding: "98px 16px",
+                                        borderRadius: "25px",
+                                        marginBottom: "5px",
                                     }}
                                 />
                             </span>
@@ -304,11 +338,9 @@ export default function ChatInput({
                             showFileOptions &&
                             <div
                                 ref={paperclipOptionRef}
-                                className='absolute index-10 bottom-11 left-10 flex flex-col gap-1 bg-black rounded-md'>
-                                <p className={`text-red-500 ${sizeLimitError ? 'w-36' : ''} bg-slate-800 rounded-lg`}>
-                                    {sizeLimitError}
-                                </p>
-                                <div className='Image-Input-Button'>
+                                className="absolute index-10 bottom-16 sm:bottom-11 left-10 flex flex-col gap-1 bg-black rounded-md"
+                            >
+                                <div className="Image-Input-Button">
                                     <input
                                         type="file"
                                         // multiple
@@ -322,12 +354,12 @@ export default function ChatInput({
                                         className="cursor-pointer flex gap-1 my-auto items-center mx-1 text-2xl text-slate-300 rounded-sm bg-slate-950 p-1 border-b-[0.1px] border-slate-700 hover:text-slate-200 hover:bg-slate-900 duration-300"
                                     >
                                         <FaRegImage />
-                                        <p className='text-base'>
+                                        <p className="text-base">
                                             Photos
                                         </p>
                                     </button>
                                 </div>
-                                <div className='Image-Input-Button'>
+                                <div className="Image-Input-Button">
                                     <input
                                         type="file"
                                         // multiple
@@ -341,7 +373,7 @@ export default function ChatInput({
                                         className="cursor-pointer flex gap-1 my-auto items-center mx-1 text-2xl text-slate-300 rounded-sm bg-slate-950 p-1 border-b-[0.1px] border-slate-700 hover:text-slate-200 hover:bg-slate-900 duration-300"
                                     >
                                         <RiFolderVideoLine />
-                                        <p className='text-base'>
+                                        <p className="text-base">
                                             Video
                                         </p>
                                     </button>
@@ -352,13 +384,13 @@ export default function ChatInput({
                             showSelectedImage &&
                             <div
                                 ref={selectedRef}
-                                className='absolute bottom-11 left-1 h-[500%] overflow-y-auto scroll-smooth flex flex-col gap-2 bg-slate-700 p-2 rounded-md'
+                                className="absolute bottom-11 left-1 h-[500%] overflow-y-auto scroll-smooth flex flex-col gap-2 bg-slate-700 p-2 rounded-md"
                             >
 
                                 <img
                                     src={selectedImages}
                                     alt="selectedImage"
-                                    className='h-[10rem] w-[10rem] border-b-[0.1px] border-slate-300'
+                                    className="h-[10rem] w-[10rem] border-b-[0.1px] border-slate-300"
                                 />
                             </div>
                         }
@@ -366,7 +398,7 @@ export default function ChatInput({
                             showSelectedVideo &&
                             <div
                                 ref={selectedRef}
-                                className='absolute bottom-11 left-1  overflow-y-auto scroll-smooth flex flex-col gap-2 bg-slate-700 p-2 rounded-md'
+                                className="absolute bottom-11 left-1  overflow-y-auto scroll-smooth flex flex-col gap-2 bg-slate-700 p-2 rounded-md"
                             >
                                 <video width="250" height="100" controls >
                                     <source src={selectedVideos} type="video/mp4" />
@@ -378,7 +410,7 @@ export default function ChatInput({
                             onClick={handleShowEmoji}
                             className="cursor-pointer my-auto items-center mx-1 text-2xl text-slate-400 rounded-full bg-slate-800 p-1 border-[0.1px] border-slate-900 hover:text-slate-300 hover:bg-slate-950 duration-300"
                         >
-                            <FaRegSmile />
+                            <BsEmojiSmileFill />
                         </div>
                         <div
                             onClick={handleShowOption}
@@ -387,15 +419,15 @@ export default function ChatInput({
                             <FaPaperclip />
                         </div>
                         <textarea
-                            type='text'
-                            placeholder='Write a message'
-                            name='Message'
+                            type="text"
+                            placeholder="Write a message"
+                            name="Message"
                             ref={inputRef}
                             autoFocus
                             value={inputOfMessage}
                             onChange={inputValueHandler}
                             onKeyDown={(e) => {
-                                if (e.key === 'Enter' && !e.shiftKey) {
+                                if (e.key === "Enter" && !e.shiftKey) {
                                     e.preventDefault();
                                     if (!loader) {
                                         sendMessageHandler();
@@ -403,15 +435,14 @@ export default function ChatInput({
                                 }
                             }}
                             onClick={() => setShowEmojiPicker(false)}
-                            className='font-normal text-base bg-transparent py-1 px-2 rounded-lg w-11/12 outline-none no-scrollbar resize-none'
+                            className="font-normal sm:text-base text-lg my-auto bg-transparent h-[70%] sm:h-full sm:py-2 px-2 rounded-lg w-11/12 outline-none sm:no-scrollbar resize-none"
                         >
                         </textarea>
-
                     </div>
                     {
                         loader ?
                             <div
-                                className='cursor-pointer flex justify-around rounded-lg border-[0.1px] border-slate-600'
+                                className="cursor-pointer w-2/12 sm:w-1/12 flex justify-around rounded-lg border-[0.1px] border-slate-600"
                             >
                                 <div
                                     className="my-auto mx-2 text-2xl text-slate-300 bg-slate-800 p-1 hover:text-slate-200 hover:bg-slate-950 duration-300"
@@ -421,7 +452,7 @@ export default function ChatInput({
                             </div>
                             :
                             <div
-                                className='cursor-pointer flex justify-around rounded-lg border-[0.1px] border-slate-600'
+                                className="cursor-pointer w-2/12 sm:w-1/12 flex justify-around rounded-lg border-[0.1px] border-slate-600"
                                 onClick={sendMessageHandler}
                             >
                                 <div

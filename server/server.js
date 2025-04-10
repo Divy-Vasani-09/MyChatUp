@@ -1,9 +1,11 @@
 const express = require('express');
 const { RtcTokenBuilder, RtcRole } = require("agora-access-token");
-require("dotenv").config();
 const http = require('http');
 const mongoose = require('mongoose');
+const nodemailer = require("nodemailer");
 const cors = require('cors');
+const bodyParser = require("body-parser");
+require("dotenv").config();
 
 const bcrypt = require('bcryptjs');
 const salt = bcrypt.genSaltSync(10);
@@ -11,10 +13,11 @@ const salt = bcrypt.genSaltSync(10);
 const userRegisterModel = require('./Models/userRegisterData');
 const conversationModel = require('./Models/conversation');
 const messageModel = require('./Models/message');
+const callDataModel = require('./Models/callData');
 const reportModel = require('./Models/Report');
+const otpModel = require('./Models/otp');
 
 const mongoURI = 'mongodb://127.0.0.1:27017/users';
-const Server = require('socket.io').Server;
 
 const cloudinary = require('cloudinary').v2;
 cloudinary.config({
@@ -30,7 +33,8 @@ const APP_CERTIFICATE = process.env.AGORA_APP_CERTIFICATE;
 const app = express();
 app.use(express.json({ limit: "50mb" }));  // Increase JSON payload limit
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
-app.use(cors());
+app.use(cors('*'));
+app.use(bodyParser.json());
 
 app.get("/agora-token", (req, res) => {
     const channelName = req.query.channelName;
@@ -40,7 +44,7 @@ app.get("/agora-token", (req, res) => {
 
     const uid = Math.floor(Math.random() * 10000) + 1; // Use a random UID
     const role = RtcRole.PUBLISHER;
-    const expireTime = 3600; // Token expires in 1 hour
+    const expireTime = 600; // Token expires in 10 min or 3600 for hour
     const currentTime = Math.floor(Date.now() / 1000);
     const privilegeExpireTime = currentTime + expireTime;
 
@@ -52,18 +56,24 @@ app.get("/agora-token", (req, res) => {
         role,
         privilegeExpireTime
     );
-    // console.log("Generated Agora Token:", { token, appId: APP_ID, channelName, uid });
 
-    res.json({ token, appId: APP_ID, channelName, uid });
+    res.status(200).json({
+        token,
+        appId: APP_ID,
+        channelName,
+        uid
+    });
 });
 
 const port = process.env.PORT;
 const server = http.createServer(app);
+const Server = require('socket.io').Server;
 const io = new Server(server, {
     cors: {
-        // origin: "*",
-        origin: "http://localhost:5173",
+        origin: "*",
+        // origin: "http://192.168.11.199:5173",
     },
+    transports: ["websocket"],
     maxHttpBufferSize: 1e8,
     pingTimeout: 90000,
     pingInterval: 30000,
@@ -78,17 +88,17 @@ io.on('connection', (socket) => {
     let userId = socket.handshake.query.userId;
 
     users++;
-    socket.emit('broadcast', { msg: 'Hii, Welcome!' })
-    socket.broadcast.emit('broadcast', { msg: users + ' users connected!' })
+    socket.emit('broadcast', { msg: 'Hii, Welcome!' });
+    socket.broadcast.emit('broadcast', { msg: users + ' users connected!' });
 
     socket.on("join_chatApp", (userId) => {
-        socket.join(userId)
-        console.log(`User ${socket.id} join chat ${userId}`)
+        socket.join(userId);
+        console.log(`User ${socket.id} join chat ${userId}`);
     })
 
     socket.on("leave_chatApp", (userId) => {
-        socket.leave(userId)
-        console.log(`User ${socket.id} leave chat ${userId}`)
+        socket.leave(userId);
+        console.log(`User ${socket.id} leave chat ${userId}`);
     })
 
     socket.on('join room', async (roomInfo) => {
@@ -97,7 +107,7 @@ io.on('connection', (socket) => {
         const receiverId = roomInfo.receiverInfo._id;
         const senderId = roomInfo.senderInfo._id;
 
-        console.log("connected Room Id :-", roomId)
+        console.log("connected Room Id :-", roomId);
 
         socket.join(roomId);
 
@@ -110,17 +120,17 @@ io.on('connection', (socket) => {
                     path: "messages",
                     match: { unActiveIds: { $nin: [userId] } },
                     options: { sort: { _id: -1 }, skip: (page - 1) * limit, limit: limit }, // Pagination applied
-                    select: "_id sender receiver message unActiveIds image video createdAt updatedAt",
+                    select: "_id sender receiver messageType message call image video unActiveIds createdAt updatedAt",
                     populate: {
-                        path: "sender receiver",
-                        select: "_id UserName EmailID PhoneNo",
+                        path: "sender receiver call",
+                        select: "_id UserName EmailID PhoneNo caller receiver callType status startedAt endedAt duration",
                     }
                 });
             if (!messages) return;
 
             socket.emit('joined', { messages });
         } catch (err) {
-            console.log("Error in joined Event : ", err)
+            console.log("Error in joined Event : ", err);
         }
     })
 
@@ -132,7 +142,7 @@ io.on('connection', (socket) => {
                 .populate({
                     path: "messages",
                     options: { sort: { _id: -1 }, skip: (page - 1) * limit, limit: limit },
-                    select: "_id sender receiver message image video updatedAt",
+                    select: "_id sender receiver messageType message image video unActiveIds updatedAt",
                     populate: {
                         path: "sender receiver",
                         select: "_id UserName EmailID PhoneNo",
@@ -162,17 +172,16 @@ io.on('connection', (socket) => {
                 console.log(`Emitting user_online event for user ${user._id}`);
                 io.emit("user_online", { userId: user._id, online: true });
             }
-        } catch (error) {
-            console.log("Error updating user status:", error);
+        } catch (err) {
+            console.log("Error updating user status:", err);
         }
     });
-
 
     socket.on('sendNewMessage', async (data) => {
         try {
             const { newMessage, newImageMessage, newVideoMessage, roomInfo } = data;
             const roomId = roomInfo.conversation_id;
-            console.log("sendNewMessage called");
+            console.log("sendNewMessage socket called");
 
             const receiverId = roomInfo.receiverInfo._id;
             const senderId = roomInfo.senderInfo._id;
@@ -182,10 +191,10 @@ io.on('connection', (socket) => {
             const conversation = await conversationModel.findById(roomId);
             if (!conversation) {
                 console.log("Conversation not found");
-                return;
+                return
             }
 
-            let message;
+            let message = [];
             if (newVideoMessage.length > 0) {
                 try {
                     for (const video of newVideoMessage) {
@@ -199,18 +208,18 @@ io.on('connection', (socket) => {
                         message = new messageModel({
                             sender: senderId,
                             receiver: receiverId,
+                            messageType: "video",
+                            message: newMessage || "",
                             video: result.secure_url
                         });
                     }
-
                     await message.save();
 
-                } catch (error) {
-                    console.log("error in video in cloud", error)
+                } catch (err) {
+                    console.log("error in video in cloud", err);
                 }
             }
-
-            if (newImageMessage.length > 0) {
+            else if (newImageMessage.length > 0) {
                 for (const image of newImageMessage) {
                     const result = await cloudinary.uploader.upload(image, {
                         folder: 'CloudinaryImages',
@@ -222,14 +231,17 @@ io.on('connection', (socket) => {
                     message = await messageModel.create({
                         sender: senderId,
                         receiver: receiverId,
+                        messageType: "image",
+                        message: newMessage || "",
                         image: result.secure_url
                     });
                 }
             }
-            if (newMessage.length > 0) {
+            else {
                 message = await messageModel.create({
                     sender: senderId,
                     receiver: receiverId,
+                    messageType: "text",
                     message: newMessage
                 });
             }
@@ -240,15 +252,17 @@ io.on('connection', (socket) => {
 
             const populatedMessage = await messageModel.findById(message._id)
                 .populate({
-                    path: "sender receiver message image video updatedAt",
+                    path: "sender receiver messageType message image video updatedAt",
                     select: "_id UserName EmailID PhoneNo "
                 });
 
-            io.to(roomId).emit("receiveNewMessage", { receiveNewMessage: populatedMessage })
-            io.to(receiverId).emit("new_Message", { receiveNewMessage: populatedMessage })
-            const validMessageIds = await messageModel.distinct("_id");
+            io.to(roomId).emit("receiveNewMessage", { receiveNewMessage: populatedMessage });
+            io.to(receiverId).emit("new_Message", { receiveNewMessage: populatedMessage, roomId });
 
-            const remove = await conversationModel.updateMany(
+            const validMessageIds = await messageModel.distinct("_id");
+            const validCallIds = await callDataModel.distinct("_id");
+
+            await conversationModel.updateMany(
                 { _id: roomId },
                 {
                     $pull: {
@@ -256,16 +270,159 @@ io.on('connection', (socket) => {
                     }
                 }
             );
-            // const removeImagesVideos = await messageModel.deleteMany({
-            //     $or: [
-            //         { image: { $exists: true, $ne: null, $ne: "" } },
-            //         { video: { $exists: true, $ne: null, $ne: "" } }
-            //     ]
-            // });
 
-            console.log("socket.send msg", data.newMessage)
+            // Remove calls not in callData
+            await conversationModel.updateMany(
+                { _id: roomId },
+                {
+                    $pull: {
+                        calls: { $nin: validCallIds }
+                    }
+                }
+            );
+            const removeImagesVideos = await messageModel.deleteMany({
+                $or: [
+                    { image: { $exists: true, $ne: null, $ne: "" } },
+                    { video: { $exists: true, $ne: null, $ne: "" } },
+                    { call: { $exists: true } }
+                ]
+            });
+
+            console.log("socket.send msg", data.newMessage);
         } catch (err) {
             console.log("Error in /sendMessage", err);
+        }
+    })
+
+    socket.on('calling', async (data) => {
+        const { channelName, userData, receiverInfo, receiverId } = data;
+        const caller = userData;
+        console.log("received from calling : ", caller);
+        const conversation = await conversationModel.findById(channelName); // channelName is a roomId
+        if (!conversation) {
+            console.log("Conversation not found");
+            return
+        }
+        const callData = await callDataModel.create({
+            caller: userData._id,
+            receiver: receiverId,
+            callType: "voice",
+            status: "ringing",
+        })
+        if (!callData) {
+            console.log("callData not created");
+            return
+        }
+
+        const message = await messageModel.create({
+            sender: userData._id,
+            receiver: receiverId,
+            messageType: "VoiceCall",
+            call: callData._id
+        });
+
+        console.log("calling called-----------", callData._id);
+
+        conversation.calls.push(callData._id);
+        conversation.messages.push(message._id);
+        conversation.latestMessage = message._id;
+        await conversation.save();
+
+        io.to(receiverId).emit('receivedCall', { channelName, from: caller, callDataId: callData._id });
+        io.to(userData._id).emit('receivedCall', { channelName, from: receiverInfo, callDataId: callData._id });
+    })
+    socket.on('acceptCall', async (data) => {
+        const { channelName, userData, receiverInfo, receiverId, callDataId } = data;
+        const caller = userData;
+        console.log("receiver accept call : ", callDataId);
+
+        const callData = await callDataModel.findByIdAndUpdate(
+            callDataId,
+            {
+                $set: {
+                    status: "ongoing",
+                    startedAt: new Date()
+                }
+            },
+            { new: true, runValidators: true }
+        );
+        if (!callData) {
+            console.log("callData not found");
+            return
+        }
+    })
+    socket.on('declineCall', async (data) => {
+        const { channelName, userData, receiverId, callDataId } = data;
+        const caller = userData;
+        console.log("call decline  ");
+
+        if (!callDataId || !mongoose.Types.ObjectId.isValid(callDataId)) {
+            console.log("Invalid callDataId:", callDataId);
+            return
+        }
+
+        const callData = await callDataModel.findById(callDataId);
+        if (!callData) {
+            console.log("callData not found");
+            return
+        }
+
+        if (callData.status === "ringing") {
+            callData.status = "declined";
+        }
+
+        await callData.save();
+
+        io.to(receiverId).emit('callDown', { channelName, from: caller });
+    })
+    socket.on('callDown', async (data) => {
+        const { channelName, userData, receiverId, callDataId } = data;
+        const caller = userData;
+        console.log("call Down : ", callDataId);
+
+        if (!callDataId || !mongoose.Types.ObjectId.isValid(callDataId)) {
+            console.log("Invalid callDataId:-", callDataId);
+            return
+        }
+
+        const callData = await callDataModel.findById(callDataId);
+        if (!callData) {
+            console.log("callData not found");
+            return
+        }
+
+        if (callData.status === "ongoing") {
+            callData.status = "completed";
+            callData.endedAt = new Date();
+            callData.duration = (callData.endedAt - callData.startedAt) / 1000; // in seconds
+        } else if (callData.status === "ringing") {
+            callData.status = "missed";
+        }
+
+        await callData.save();
+
+        io.to(receiverId).emit('callDown', { channelName, from: caller });
+
+        const message = await messageModel.findOne({ call: callDataId })
+            .populate({
+                path: "sender receiver messageType message image video updatedAt",
+                select: "_id UserName EmailID PhoneNo "
+            })
+            .populate({
+                path: "call",
+                select: "_id caller receiver callType status startedAt endedAt duration"
+            });
+
+        console.log(message);
+
+        if (!message) {
+            console.log("message not found");
+            return
+        }
+
+        if (message) {
+            io.to(userData._id).emit("receiveNewMessage", { receiveNewMessage: message });
+            io.to(receiverId).emit("new_Message", { receiveNewMessage: message, roomId });
         }
     })
 
@@ -274,8 +431,8 @@ io.on('connection', (socket) => {
             const { userId, roomInfo, blockedId } = data;
 
             io.to(roomId).emit("block", { userId, roomInfo, blockedId })
-        } catch (error) {
-            console.log('Error in block socket : ', error);
+        } catch (err) {
+            console.log('Error in block socket : ', err);
         }
     })
 
@@ -284,8 +441,8 @@ io.on('connection', (socket) => {
             const { userId, roomInfo, blockedId } = data;
 
             io.to(roomId).emit("unblock", { userId, roomInfo, blockedId })
-        } catch (error) {
-            console.log('Error in block socket : ', error);
+        } catch (err) {
+            console.log('Error in block socket : ', err);
         }
     })
 
@@ -308,16 +465,16 @@ io.on('connection', (socket) => {
                     }
                 });
             if (!messages) return;
-            if (clearFor.me){
+            if (clearFor.me) {
                 return socket.emit('clearChat', { messages });
             }
-            if(clearFor.everyone){
+            if (clearFor.everyone) {
                 io.to(roomId).emit('clearChat', { messages });
                 return
             }
 
-        } catch (error) {
-            console.log('Error in clearChatEffect socket : ', error);
+        } catch (err) {
+            console.log('Error in clearChatEffect socket : ', err);
         }
     })
 
@@ -325,36 +482,61 @@ io.on('connection', (socket) => {
         console.log("User Is Disconnected!", reason);
 
         users--;
-        socket.broadcast.emit('broadcast', { msg: users + ' users connected!' })
+        socket.broadcast.emit('broadcast', { msg: users + ' users connected!' });
 
-        if (reason === "transport error" || reason === "ping timeout") {
-            console.log("Reconnecting...");
-            setTimeout(() => {
-                socket.connect();
-            }, 2000);
-        }
-
-        const userId = socketIdToUserId.get(socket.id)
+        const userId = socketIdToUserId.get(socket.id);
         if (userId) {
             try {
-                const user = await userRegisterModel.findById(userId)
+                const user = await userRegisterModel.findById(userId);
                 if (user) {
                     user.online = false,
                         user.lastSeen = new Date();
                     await user.save();
-                    io.emit('user_online', { userId: user._id, online: false, lastSeen: user.lastSeen })
+                    io.emit('user_online', { userId: user._id, online: false, lastSeen: user.lastSeen });
                     console.log('user disconnected successfully...!');
                 }
-            } catch (error) {
-
+            } catch (err) {
+                console.log("Error in update user status ", err);
             }
         }
-
-        socket.disconnect();
     })
 })
 
 mongoose.connect(mongoURI);
+// nodemailer to send otp in mail
+const transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+        user: "divyvasani.niqox@gmail.com", // Your email
+        pass: "ckbr risy trgk rrju" // Your email app password
+    }
+});
+
+// Function to send OTP via email
+const sendOTPEmail = async (email, otp) => {
+    const mailOptions = {
+        from: "divyvasani.niqox@gmail.com",
+        to: email,
+        subject: "One Time Password MyChatMX",
+        html: `
+            <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #ddd;">
+                <h2 style="color: #333;">Your OTP Code</h2>
+                <p>Your OTP code is <strong style="color: #000; font-size: 25px;"> ${otp}</strong></p>
+                <p>This OTP will expire in <strong>3 minutes</strong>. If you did not request this, ignore this email.</p>
+                <hr>
+                <p style="font-size: 12px; color: #777;">MyChatMX</p>
+            </div>
+        `,
+    };
+
+    try {
+        await transporter.sendMail(mailOptions);
+
+        console.log("OTP email sent to:", email);
+    } catch (error) {
+        console.error("Error sending email:", error);
+    }
+};
 
 app.post('/Registration', async (req, res) => {
     try {
@@ -414,6 +596,7 @@ app.post('/Login', (req, res) => {
                 DP: user.DP,
                 About: user.About,
             };
+            console.log("successfully login!");
             res.status(200).send({
                 success: true,
                 user: userData
@@ -421,7 +604,56 @@ app.post('/Login', (req, res) => {
         })
 })
 
-app.post('/ForgotPassword', (req, res) => {
+app.post('/ForgotPassword', async (req, res) => {
+    const { EmailIDOrPhoneNo } = req.body;
+    const user = await userRegisterModel.findOne({ $or: [{ EmailID: EmailIDOrPhoneNo }, { PhoneNo: EmailIDOrPhoneNo }] })
+    if (!user) {
+        console.log("user is not on db ---------------------------")
+        return res.status(404).json("No record existed");
+    }
+    console.log(user);
+
+    const userWithEmail = await userRegisterModel.findOne({ EmailID: EmailIDOrPhoneNo })
+    const userWithPhone = await userRegisterModel.findOne({ PhoneNo: EmailIDOrPhoneNo })
+
+    const otp = Math.floor(100000 + Math.random() * 999999);
+
+    if (userWithEmail) {
+        try {
+            await sendOTPEmail(EmailIDOrPhoneNo, otp);
+            await otpModel.create({ userId: user.id, otp });
+
+            return res.status(200).json({ message: "OTP sent successfully" });
+        } catch (error) {
+            console.log('error in otp send or mongo :--> ', error);
+            return res.status(500);
+        }
+    }
+    if (userWithPhone) { }
+})
+app.post('/verify-otp', async (req, res) => {
+    try {
+        const { EmailIDOrPhoneNo, otp } = req.body;
+        console.log("email -->",EmailIDOrPhoneNo);
+        const user = await userRegisterModel.findOne({ $or: [{ EmailID: EmailIDOrPhoneNo }, { PhoneNo: EmailIDOrPhoneNo }] })
+        if (!user) {
+            console.log("user is not on db ---------------------------")
+            return res.status(404).json("No record existed");
+        }
+        console.log(user);
+
+        const otpRecord = await otpModel.findOne({ userId: user.id, otp });
+
+        if (!otpRecord) return res.status(400).json({ message: "Invalid OTP" });
+        await otpModel.deleteOne({ userId: user.id });
+
+        return res.status(200).json({ message: "OTP verified successfully" });
+    } catch (error) {
+        console.log('error in verify-otp :--> ', error);
+        return res.status(500);
+    }
+})
+app.post('/set_new_password', (req, res) => {
     const { EmailIDOrPhoneNo, Password, ConfirmPassword } = req.body;
     userRegisterModel.findOne({ $or: [{ EmailID: EmailIDOrPhoneNo }, { PhoneNo: EmailIDOrPhoneNo }] })
         .then(user => {
@@ -477,9 +709,14 @@ app.post('/editProfile', (req, res) => {
     })
 })
 
-app.get('/SearchBarNewChat', (req, res) => {
-    const { input, userData } = req.query;
+app.post('/SearchBarNewChat', (req, res) => {
+    const { input, userData } = req.body;
+    // const { input, userData } = req.query;
     const regex = new RegExp(input, 'i');
+
+    console.log("input :- ", input)
+    console.log("userData :- ", userData)
+
     if (!input) {
         return res.status(400).send({
             success: false,
@@ -494,8 +731,9 @@ app.get('/SearchBarNewChat', (req, res) => {
                     message: "No record existed"
                 });
             }
-            const itemToBeRemoved = userData._id.toString();
+            const itemToBeRemoved = userData._id;
             user = user.filter(u => u._id.toString() !== itemToBeRemoved);
+            console.log("find :",user)
 
             res.status(200).json({
                 user
@@ -514,7 +752,7 @@ app.post('/contact', async (req, res) => {
         })
         .populate({
             path: "participants latestMessage",
-            select: "_id DP UserName EmailID PhoneNo About online lastSeen message sender receiver image video updatedAt",
+            select: "_id DP UserName EmailID PhoneNo About online lastSeen sender receiver messageType message image video call updatedAt",
 
         });
 
@@ -528,6 +766,33 @@ app.post('/contact', async (req, res) => {
     res.status(200).json({
         success: true,
         conversations,
+    });
+})
+app.post('/callHistory', async (req, res) => {
+    const { userData } = req.body;
+    const userId = userData._id;
+    const calls = await callDataModel
+        .find({
+            $or: [
+                { caller: userId },
+                { receiver: userId }
+            ]
+        })
+        .populate({
+            path: "caller receiver",
+            select: "_id DP UserName EmailID PhoneNo updatedAt",
+        });
+
+    if (calls.length === 0) {
+        return res.status(204).json({
+            success: false,
+            message: "No calls found",
+        });
+    }
+
+    res.status(200).json({
+        success: true,
+        calls,
     });
 })
 
@@ -584,8 +849,8 @@ app.post('/newChat', async (req, res) => {
             newConversation,
         });
 
-    } catch (error) {
-        console.log("Error in /newChat", error);
+    } catch (err) {
+        console.log("Error in /newChat", err);
         return res.status(500).json({
             success: false,
             message: "Server Error!",
@@ -697,8 +962,8 @@ app.post('/chats', async (req, res) => {
 
 //                 await messageModel.insertMany(message);
 
-//             } catch (error) {
-//                 console.log("error in video in cloud", error)
+//             } catch (err) {
+//                 console.log("error in video in cloud", err)
 //             }
 //         }
 
@@ -788,8 +1053,8 @@ app.post('/uploadDp', async (req, res) => {
             userDp: updatedUser.DP
         });
 
-    } catch (error) {
-        console.error("Error in uploadDp", error);
+    } catch (err) {
+        console.error("Error in uploadDp", err);
         return res.status(500).json({ message: "Internal Server Error", error });
     }
 });
@@ -835,8 +1100,8 @@ app.post('/block', async (req, res) => {
             updatedConversation: block
         });
 
-    } catch (error) {
-        console.error('Error in /block:', error);
+    } catch (err) {
+        console.error('Error in /block:', err);
         return res.status(500).json({
             success: false,
             message: "Internal server error",
@@ -882,8 +1147,8 @@ app.post('/unblock', async (req, res) => {
             updatedConversation: unblock
         });
 
-    } catch (error) {
-        console.error('Error in /unblock:', error);
+    } catch (err) {
+        console.error('Error in /unblock:', err);
         return res.status(500).json({
             success: false,
             message: "Internal server error",
@@ -938,8 +1203,8 @@ app.post('/report', async (req, res) => {
             message: "Your report submitted!",
         });
 
-    } catch (error) {
-        console.log("Error in /report : ", error);
+    } catch (err) {
+        console.log("Error in /report : ", err);
         return res.status(500).json({
             success: false,
             message: "Internal server error",
@@ -978,8 +1243,8 @@ app.post('/clearChat', async (req, res) => {
             updatedMessages
         })
 
-    } catch (error) {
-        console.log('Error in /clearChat : ', error);
+    } catch (err) {
+        console.log('Error in /clearChat : ', err);
         return res.status(500).json({
             success: false,
             message: "Internal server error",
@@ -989,5 +1254,5 @@ app.post('/clearChat', async (req, res) => {
 })
 
 server.listen(port, () => {
-    console.log("Server is Running http://localhost:3002")
+    console.log(`Server is Running http://localhost:${port}`)
 })

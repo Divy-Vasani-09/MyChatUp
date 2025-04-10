@@ -1,63 +1,74 @@
-import React, { useEffect, useRef, useState } from 'react';
-import SideBar from './DashBoardComponent/SideBar';
-import { Outlet, useSearchParams } from 'react-router-dom';
-import { ToastContainer, toast } from 'react-toastify';
-import ChatBox from './DashBoardComponent/ChatComponents/ChatBox';
-import socketClient from 'socket.io-client';
+import React, { useEffect, useRef, useState } from "react";
+import SideBar from "./DashBoardComponent/SideBar";
+import { Outlet, useSearchParams } from "react-router-dom";
+import { ToastContainer, toast } from "react-toastify";
+import ChatBox from "./DashBoardComponent/ChatComponents/ChatBox";
+import CallBox from "./DashBoardComponent/callComponents/callBox";
+import socketClient from "socket.io-client";
 import AgoraRTC from "agora-rtc-sdk-ng";
-import axios from 'axios';
+import axios from "axios";
+import API_URL, { SOCKET_URL } from "../config";
 
 export default function DashBoard() {
   const userData = JSON.parse(sessionStorage.getItem("userLoggedData"));
   const userId = userData?._id;
 
   const [conversationList, setConversationList] = useState([]);
+  const [isChat, setIsChat] = useState(false);
+  const [callList, setCallList] = useState([]);
+  const [callInfo, setCallInfo] = useState({});
+  const [isCall, setIsCall] = useState(false);
 
   const [receiverPass, setReceiverPass] = useState(false);
   const [roomInfo, setRoomInfo] = useState({});
-  const [roomId, setRoomId] = useState()
+  const [roomId, setRoomId] = useState();
   const [status, setStatus] = useState({
     online: false,
     lastSeen: null
-  })
+  });
   const [chats, setChats] = useState(null);
 
-  const [loadMoreMessage, setLoadMoreMessage] = useState(false)
+  const [loadMoreMessage, setLoadMoreMessage] = useState(false);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
-  const [newMessage, setNewMessage] = useState('');
+  const [newMessage, setNewMessage] = useState("");
   const [newImageMessage, setNewImageMessage] = useState([]);
   const [newVideoMessage, setNewVideoMessage] = useState([]);
 
-  const inputRef = useRef(null);
+  const inputRef = useRef();
   const [socket, setSocket] = useState(null);
 
   useEffect(() => {
     if (socket && !roomInfo) return console.log("socket true"); // Prevent duplicate connections
+    console.log("Connecting to Socket.io at:", SOCKET_URL);
 
-    const newSocket = socketClient('http://localhost:3002', {
+    // const newSocket = socketClient("http://localhost:3002", {
+    const newSocket = socketClient(SOCKET_URL, {
+      transports: ["websocket"],
       query: { userId: userData._id },
-      reconnection: true,  // This is true by default
-      reconnectionAttempts: 5,
-      reconnectionDelay: 1000,
+      reconnection: true,    // This is true by default
+      reconnectionAttempts: 5,    // This is Infinity by default 
+      reconnectionDelay: 2000,    // This is 1s=1000 by default
+      reconnectionDelayMax: 5000,    // This is 5s by default
+      randomizationFactor: 0.5    // This is 50% by default
     });
 
-    setSocket(newSocket); // Store in state
+    setSocket(newSocket);
 
     newSocket.on("connect", async () => {
       console.log("Socket Connected:", newSocket.id);
-      newSocket.emit('user_online', { userId });
+      console.log("Socket ID:", newSocket.id);
+      console.log("Socket Connected?:", newSocket.connected);
+      newSocket.emit("user_online", { userId });
     });
-    console.log("Socket ID:", newSocket.id);
-    console.log("Socket Connected?:", newSocket.connected);
 
     if (roomInfo?.conversation_id && !socket) {
-      newSocket.emit('join room', roomInfo);
+      newSocket.emit("join room", roomInfo);
       console.log("re join called");
 
       let lastSeen = roomInfo?.receiverInfo?.lastSeen
       const date = new Date(lastSeen).toLocaleDateString();
-      const time = new Date(lastSeen).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const time = new Date(lastSeen).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
       const tDate = new Date().toLocaleDateString();
 
@@ -72,6 +83,12 @@ export default function DashBoard() {
 
     newSocket.on("disconnect", (reason) => {
       console.log("Socket Disconnected:", reason);
+      if (reason === "transport error" || reason === "ping timeout") {
+        console.log("Reconnecting...");
+        setTimeout(() => {
+          socket.connect();
+        }, 2000);
+      }
     });
 
     newSocket.on("reconnect_attempt", (attempt) => {
@@ -99,18 +116,19 @@ export default function DashBoard() {
     const handleNew_Message = async (data) => {
       setConversationList(prevList =>
         prevList.map(obj =>
-          obj.conversation_id === "67c00e48f46ebba7d880ef7d"
+          obj.conversation_id === data.roomId
             ? { ...obj, latestMessage: data.receiveNewMessage, updatedAt: data.receiveNewMessage.updatedAt }
             : obj
         )
       );
+      console.log("new msg :- ", data.receiveNewMessage)
     }
 
-    socket.emit('join_chatApp', userId);
-    socket.on('new_Message', handleNew_Message)
+    socket.emit("join_chatApp", userId);
+    socket.on("new_Message", handleNew_Message)
 
     return () => {
-      socket.emit('leave_chatApp', userId);
+      socket.emit("leave_chatApp", userId);
     };
   }, [socket])
 
@@ -122,10 +140,10 @@ export default function DashBoard() {
       console.log(data);
     };
 
-    socket.on('broadcast', handleBroadcast);
+    socket.on("broadcast", handleBroadcast);
 
     return () => {
-      socket.off('broadcast', handleBroadcast);
+      socket.off("broadcast", handleBroadcast);
     };
   }, [userData]);
 
@@ -133,11 +151,11 @@ export default function DashBoard() {
     if (!socket) return setChats(null);
     setRoomId(roomInfo?.conversation_id)
     if (roomInfo?.conversation_id) {
-      socket.emit('join room', roomInfo);
+      socket.emit("join room", roomInfo);
 
       let lastSeen = roomInfo?.receiverInfo?.lastSeen
       const date = new Date(lastSeen).toLocaleDateString();
-      const time = new Date(lastSeen).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const time = new Date(lastSeen).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
       const tDate = new Date().toLocaleDateString();
 
@@ -182,12 +200,12 @@ export default function DashBoard() {
       });
     }
 
-    socket.on('joined', handleJoined);
-    socket.on('clearChat', handleClearChat);
+    socket.on("joined", handleJoined);
+    socket.on("clearChat", handleClearChat);
 
     return () => {
-      socket.off('joined', handleJoined);
-      socket.off('clearChat', handleClearChat);
+      socket.off("joined", handleJoined);
+      socket.off("clearChat", handleClearChat);
     }
   });
 
@@ -202,7 +220,7 @@ export default function DashBoard() {
 
       if (userId === roomInfo.receiverInfo?._id) {
         const date = new Date(lastSeen).toLocaleDateString();
-        const time = new Date(lastSeen).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const time = new Date(lastSeen).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
         const tDate = new Date().toLocaleDateString();
 
@@ -217,14 +235,12 @@ export default function DashBoard() {
       }
     }
 
-    socket.on('user_online', handleUser_online)
+    socket.on("user_online", handleUser_online)
 
     return () => {
-      socket.off('user_online', handleUser_online);
+      socket.off("user_online", handleUser_online);
     }
   })
-
-
 
   useEffect(() => {
     if (newMessage || newImageMessage.length > 0 || newVideoMessage.length > 0) {
@@ -234,12 +250,12 @@ export default function DashBoard() {
   }, [newMessage, newImageMessage, newVideoMessage]);
 
   const sendMessage = () => {
-    socket.emit('sendNewMessage', { newMessage, newImageMessage, newVideoMessage, roomInfo });
+    socket.emit("sendNewMessage", { newMessage, newImageMessage, newVideoMessage, roomInfo });
     console.log("send message emit called");
 
     setNewImageMessage([]);
     setNewVideoMessage([]);
-    setNewMessage('');
+    setNewMessage("");
   };
 
   useEffect(() => {
@@ -258,57 +274,122 @@ export default function DashBoard() {
       setChats((prev = []) => [...prev, data.receiveNewMessage]);
     };
 
-    socket.on('receiveNewMessage', handleNewMessage);
+    socket.on("receiveNewMessage", handleNewMessage);
 
     return () => {
-      socket.off('receiveNewMessage', handleNewMessage);
+      socket.off("receiveNewMessage", handleNewMessage);
     };
   });
 
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 640);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 640);
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   return (
-    <div className='text-white flex bg-white'>
-      <div>
-        <ToastContainer
-          stacked
-          position="top-center"
-          autoClose={2000}
-          // hideProgressBar
-          newestOnTop={false}
-          closeOnClick={true}
-          pauseOnFocusLoss={false}
-          draggable
-          pauseOnHover
-          theme="colored" />
-      </div>
-      <div className="container flex w-4/12 min-h-[88vh] max-h-[89vh] p-1 py-2 gap-3 bg-slate-900 ">
-        <div className="container w-1/6 rounded-xl bg-slate-800 bg-opacity-75 shadow-slate-600 drop-shadow shadow-sm">
-          <SideBar />
+    <>
+      <div className={`text-white flex h-screen ${(isChat || isCall) && isMobile ? "hidden" : ""}`}>
+        <div>
+          <ToastContainer
+            stacked
+            position="top-right"
+            autoClose={2000}
+            // hideProgressBar
+            newestOnTop={false}
+            closeOnClick={true}
+            pauseOnFocusLoss={false}
+            draggable
+            pauseOnHover
+            theme="colored" />
         </div>
-        <div className="container w-5/6 rounded-xl bg-slate-800 bg-opacity-75 shadow-slate-600 drop-shadow shadow-sm">
-          <Outlet
-            context={{ conversationList, setConversationList, setReceiverPass, setRoomInfo, inputRef }}
-          />
+        <div className="container flex w-full sm:w-4/12 h-full p-1 py-2 gap-3 bg-slate-900 ">
+          <div className="container w-1/6 h-full rounded-xl bg-slate-800 bg-opacity-75 shadow-slate-600 drop-shadow shadow-sm">
+            <SideBar />
+          </div>
+          <div className="container w-5/6 h-full rounded-xl bg-slate-800 bg-opacity-75 overflow-hidden shadow-slate-600 drop-shadow shadow-sm">
+            <Outlet
+              context={{ socket, conversationList, setConversationList, setReceiverPass, setRoomInfo, setIsChat, inputRef, callList, setCallList, callInfo, setCallInfo, setIsCall }}
+            />
+          </div>
+        </div>
+        <div className="container w-9/12 hidden sm:flex h-full p-1 py-2 gap-3 bg-slate-900">
+          <div className="w-full h-full mx-1 rounded-xl border-[0.1px] border-slate-700">
+            {
+              isChat ?
+                <ChatBox
+                  socket={socket}
+                  userData={userData}
+                  receiverPass={receiverPass}
+                  roomInfo={roomInfo}
+                  setRoomInfo={setRoomInfo}
+                  status={status}
+                  chats={chats}
+                  setChats={setChats}
+                  loadMoreMessage={loadMoreMessage}
+                  setLoadMoreMessage={setLoadMoreMessage}
+                  hasMore={hasMore}
+                  setNewMessage={setNewMessage}
+                  setNewImageMessage={setNewImageMessage}
+                  setNewVideoMessage={setNewVideoMessage}
+                  inputRef={inputRef}
+                />
+                :
+                isCall ?
+                  <CallBox
+                    callInfo={callInfo} />
+                  :
+                  <div className="flex w-full h-full rounded-xl">
+                    <h1 className="w-full flex justify-center items-center font-bold">
+                      No Messages
+                    </h1>
+                  </div>
+            }
+          </div>
         </div>
       </div>
-      <div className="container w-9/12 flex min-h-[88vh] max-h-[89vh] p-1 py-2 gap-3 bg-slate-900 ">
-        <ChatBox
-          socket={socket}
-          userData={userData}
-          receiverPass={receiverPass}
-          roomInfo={roomInfo}
-          setRoomInfo={setRoomInfo}
-          status={status}
-          chats={chats}
-          setChats={setChats}
-          loadMoreMessage={loadMoreMessage}
-          setLoadMoreMessage={setLoadMoreMessage}
-          hasMore={hasMore}
-          setNewMessage={setNewMessage}
-          setNewImageMessage={setNewImageMessage}
-          setNewVideoMessage={setNewVideoMessage}
-          inputRef={inputRef}
-        />
+      <div className={`container w-full h-full ${isChat || isCall ? "sm:hidden flex" : "sm:flex hidden"} p-1 py-2 gap-3 bg-slate-900 `}>
+        <div className="w-full h-full mx-1 rounded-xl text-white border-[0.1px] border-slate-700 ">
+          {
+            isChat ?
+              <ChatBox
+                socket={socket}
+                userData={userData}
+                receiverPass={receiverPass}
+                roomInfo={roomInfo}
+                setRoomInfo={setRoomInfo}
+                setIsChat={setIsChat}
+                status={status}
+                chats={chats}
+                setChats={setChats}
+                loadMoreMessage={loadMoreMessage}
+                setLoadMoreMessage={setLoadMoreMessage}
+                hasMore={hasMore}
+                setNewMessage={setNewMessage}
+                setNewImageMessage={setNewImageMessage}
+                setNewVideoMessage={setNewVideoMessage}
+                inputRef={inputRef}
+              />
+              :
+              isCall ?
+                <CallBox
+                  setIsCall={setIsCall}
+                  callInfo={callInfo}
+                />
+                :
+                <div className="flex w-full h-full rounded-xl">
+                  <h1 className="w-full flex justify-center items-center font-bold">
+                    No Messages
+                  </h1>
+                </div>
+          }
+        </div>
       </div>
-    </div>
+    </>
   )
 }

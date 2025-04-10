@@ -1,13 +1,16 @@
-import React, { useContext, useEffect, useRef, useState } from 'react';
-import { Link, NavLink, useOutletContext } from 'react-router-dom';
-import SearchBarNewChat from './SearchBarNewChat';
+import React, { useContext, useEffect, useRef, useState } from "react";
+import { Link, NavLink, useOutletContext } from "react-router-dom";
+import { ToastContainer, toast } from "react-toastify";
+import SearchBarNewChat from "./SearchBarNewChat";
 import { FaEdit } from "react-icons/fa";
 import { FaRegImage } from "react-icons/fa6";
 import { RiFolderVideoLine } from "react-icons/ri";
-import UserIcon from 'C:/Users/Destiny/OneDrive/Desktop/MyChatUp/client/src/assets/profile.png';
-import axios from 'axios';
-import Select from 'react-select';
-import makeAnimated from 'react-select/animated';
+import { FaUserCircle } from "react-icons/fa";
+import UserIcon from "C:/Users/Destiny/OneDrive/Desktop/MyChatUp/client/src/assets/profile.png";
+import axios from "axios";
+import Select from "react-select";
+import makeAnimated from "react-select/animated";
+import API_URL from "../../config";
 
 const animatedComponents = makeAnimated();
 
@@ -21,17 +24,19 @@ function Contact() {
     const [newGroup, setNewGroup] = useState(false);
     const newGroupRef = useRef();
     const [searchResults, setSearchResults] = useState([]);
-    const [chosenResult, setChosenResult] = useState('');
+    const [chosenResult, setChosenResult] = useState("");
 
     const [allData, setAllData] = useState([]);
     const [newGroupData, setNewGroupData] = useState([]);
     const [next, setNext] = useState(false);
-    const [groupName, setGroupName] = useState('');
+    const [groupName, setGroupName] = useState("");
 
     const { conversationList } = useOutletContext();
     const { setConversationList } = useOutletContext();
     const { setReceiverPass } = useOutletContext();
     const { setRoomInfo } = useOutletContext();
+    const { setIsChat } = useOutletContext();
+    const { setIsCall } = useOutletContext();
     const { inputRef } = useOutletContext();
 
     const handleEdit = () => {
@@ -40,7 +45,7 @@ function Contact() {
         setNewGroup(false);
         setNext(false);
         setNewGroupData([]);
-        setGroupName('');
+        setGroupName("");
     }
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -105,8 +110,8 @@ function Contact() {
     }
 
     useEffect(() => {
-        if (chosenResult !== '') {
-            axios.post('http://127.0.0.1:3002/newChat', { chosenResult, userData })
+        if (chosenResult !== "") {
+            axios.post(`${API_URL}/newChat`, { chosenResult, userData })
                 .then(result => {
                     console.log(result);
                     const newConversation = result.data.newConversation;
@@ -119,7 +124,7 @@ function Contact() {
 
                     setNewChat(false);
                     setSearchResults([])
-                    setChosenResult('')
+                    setChosenResult("")
                 })
                 .catch(err => {
                     console.log(err);
@@ -129,7 +134,7 @@ function Contact() {
     }, [chosenResult])
 
     const newGroupHandler = () => {
-        axios.post('http://127.0.0.1:3002/allRegisteredData', { userData })
+        axios.post(`${API_URL}/allRegisteredData`, { userData })
             .then(result => {
                 console.log(result.data.allData);
                 const formattedData = result.data.allData.map(item => ({
@@ -147,45 +152,45 @@ function Contact() {
     const styles = {
         control: (base, state) => ({
             ...base,
-            backgroundColor: '#1E293B',
-            marginBottom: '5px',
-            border: 'none',
-            cursor: 'text'
+            backgroundColor: "#1E293B",
+            marginBottom: "5px",
+            border: "none",
+            cursor: "text"
         }),
         input: (base) => ({
             ...base,
-            color: 'white',
+            color: "white",
         }),
         dropdownIndicator: (base) => ({
             ...base,
-            color: 'gray',
-            cursor: 'pointer',
-            '&:hover': {
-                color: 'white',
+            color: "gray",
+            cursor: "pointer",
+            "&:hover": {
+                color: "white",
             },
         }),
         clearIndicator: (base) => ({
             ...base,
-            color: 'gray',
-            cursor: 'pointer',
-            '&:hover': {
-                color: 'white',
+            color: "gray",
+            cursor: "pointer",
+            "&:hover": {
+                color: "white",
             },
         }),
         option: (base, state) => ({
             ...base,
-            cursor: 'pointer',
-            color: 'white',
-            backgroundColor: '#1E293B',
-            borderBottom: '0.1px solid gray',
-            '&:hover': {
-                backgroundColor: '#1f212C',
+            cursor: "pointer",
+            color: "white",
+            backgroundColor: "#1E293B",
+            borderBottom: "0.1px solid gray",
+            "&:hover": {
+                backgroundColor: "#1f212C",
             },
         }),
         menu: (base) => ({
             ...base,
-            marginTop: '45px',
-            border: 'none',
+            marginTop: "45px",
+            border: "none",
         }),
         menuList: (base) => ({
             ...base,
@@ -206,7 +211,7 @@ function Contact() {
         setNext(false);
         setNewGroup(false);
         setNewGroupData([]);
-        setGroupName('');
+        setGroupName("");
     }
 
     const handleGroupName = (e) => {
@@ -220,7 +225,7 @@ function Contact() {
         if (groupName.length < 1) return;
         console.log("create")
 
-        axios.post('http//127.0.0.1:3002/createGroup', { newGroupData, groupName, userData })
+        axios.post(`${API_URL}/createGroup`, { newGroupData, groupName, userData })
             .then(result => {
                 console.log(result)
             })
@@ -230,8 +235,8 @@ function Contact() {
     }
 
     useEffect(() => {
-        if (conversationList.length === 0 && userData !== '') {
-            axios.post('http://127.0.0.1:3002/contact', { userData })
+        if (conversationList.length === 0 && userData !== "") {
+            axios.post(`${API_URL}/contact`, { userData })
                 .then(result => {
                     console.log(result);
                     if (result.status === 204) return;
@@ -267,8 +272,9 @@ function Contact() {
         }
     }, [])
 
-
     const conversationHandler = async (result) => {
+        setIsCall(false);
+        setIsChat(true);
         setReceiverPass(true);
         setRoomInfo(result);
         if (inputRef?.current) {
@@ -277,8 +283,8 @@ function Contact() {
     }
 
     return (
-        <div className="w-full mx-auto mt-2 min-h-[84.6vh] max-h-[84.6vh]">
-            <div className="flex flex-col w-full text-center items-center ">
+        <div className="w-full mx-auto mt-2 h-full">
+            <div className="flex flex-col w-full h-full text-center items-center">
                 <div className="flex flex-col w-full p-1 gap-3 rounded-xl">
                     <div className="relative cursor-text text-left my-[3px] h-[25px] rounded-[12px] w-full">
                         <div
@@ -300,7 +306,7 @@ function Contact() {
                                 ref={editRef}
                                 className="mt-2 bg-[#1d2024] w-full"
                             >
-                                <ul className="absolute z-10 bg-[#1e2125] flex flex-col w-10/12 right-0 ">
+                                <ul className="absolute z-10 bg-[#1e2125] flex flex-col w-9/12 right-0 ">
                                     <li
                                         onClick={newChatHandler}
                                         className="cursor-pointer bg-slate-900 w-full h-[35px] px-[24px] py-1 flex self-stretch border-b-[1px] border-slate-700 hover:bg-slate-800"
@@ -313,7 +319,7 @@ function Contact() {
                                     </li>
                                     <li
                                         onClick={newGroupHandler}
-                                        className="cursor-pointer bg-slate-900 w-full h-[35px] px-[24px] py-1 self-stretch border-b-[1px] border-slate-700 hover:bg-slate-800"
+                                        className="cursor-pointer  bg-slate-900 w-full h-[35px] px-[24px] py-1 self-stretch border-b-[1px] border-slate-700 hover:bg-slate-800"
                                     >
                                         <p
                                             className=" "
@@ -342,7 +348,7 @@ function Contact() {
                                                 className="container result-List absolute top-12 flex flex-col items-center bg-slate-900 z-10 w-full max-h-52 py-1 mr-12 rounded-lg drop-shadow shadow-md"
                                             >
                                                 {
-                                                    searchResults.slice(0, 5).map((result, id) => {
+                                                    searchResults?.slice(0, 5).map((result, id) => {
                                                         return <button
                                                             key={id}
                                                             data-id={result._id}
@@ -372,14 +378,14 @@ function Contact() {
                                             next
                                                 ?
                                                 <input
-                                                    type='text'
-                                                    placeholder='Enter Group Name...'
-                                                    name='groupName'
+                                                    type="text"
+                                                    placeholder="Enter Group Name..."
+                                                    name="groupName"
                                                     value={groupName}
                                                     onChange={(e) => handleGroupName(e)}
                                                     autoFocus
                                                     autoComplete="off"
-                                                    className="text-white bg-slate-800 my-1 py-1 px-2 w-full outline-none rounded-md border-[1px] border-slate-500 hover:bg-slate-900 hover:border-slate-400 duration-200"
+                                                    className="text-white bg-slate-800 my-1 py-1 px-2 w-full outline-none rounded-md border-[1px] border-slate-500 hover:bg-slate-900 hover:border-slate-400 duration-300"
                                                 >
                                                 </input>
                                                 :
@@ -391,13 +397,12 @@ function Contact() {
                                                     value={newGroupData}
                                                     onChange={handleChange}
                                                     onKeyDown={(e) => {
-                                                        if (e.key === 'Enter' && !e.shiftKey) {
+                                                        if (e.key === "Enter" && !e.shiftKey) {
                                                             e.preventDefault();
                                                             handleNext()
-                                                            console.log("hi")
                                                         }
                                                     }}
-                                                    options={allData}
+                                                    options={[...allData].sort((a, b) => a.label.localeCompare(b.label))}
                                                     styles={styles}
                                                 />
                                         }
@@ -408,22 +413,22 @@ function Contact() {
                                                 next
                                                     ?
                                                     <button
-                                                        onClick={handleCreateGroup}
-                                                        className="cursor-pointer w-full rounded-md border-[1px] border-slate-500 hover:bg-slate-900 hover:border-slate-400 duration-200"
+                                                        // onClick={handleCreateGroup}
+                                                        className="cursor-pointer w-full rounded-md border-[1px] border-slate-500 hover:bg-slate-900 hover:border-slate-400 duration-300"
                                                     >
                                                         Create
                                                     </button>
                                                     :
                                                     <button
                                                         onClick={handleNext}
-                                                        className="cursor-pointer w-full rounded-md border-[1px] border-slate-500 hover:bg-slate-900 hover:border-slate-400 duration-200"
+                                                        className="cursor-pointer w-full rounded-md border-[1px] border-slate-500 hover:bg-slate-900 hover:border-slate-400 duration-300"
                                                     >
                                                         Next
                                                     </button>
                                             }
                                             <button
                                                 onClick={handleCancel}
-                                                className="cursor-pointer w-full rounded-md border-[1px] border-slate-500 hover:bg-slate-900 hover:border-slate-400 duration-200"
+                                                className="cursor-pointer w-full rounded-md border-[1px] border-slate-500 hover:bg-slate-900 hover:border-slate-400 duration-300"
                                             >
                                                 Cancel
                                             </button>
@@ -435,7 +440,7 @@ function Contact() {
                         }
                     </div>
                 </div>
-                <div className="container overflow-y-scroll no-scrollbar scroll-smooth max-h-[4.2in] ">
+                <div className="container overflow-y-scroll no-scrollbar scroll-smooth p-1 w-full bg- ">
                     {(() => {
                         let lastDate = null;
 
@@ -444,61 +449,48 @@ function Contact() {
                             .map((result, id) => {
                                 const now = new Date(result.updatedAt);
                                 const date = now.toLocaleDateString();
-                                const time = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                                const time = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
 
                                 lastDate = date;
                                 return <div
                                     key={id}
                                     data={result}
-                                    className="container flex cursor-pointer p-2 gap-3 mt-3 mx-auto w-[95%] rounded-xl bg-slate-700 bg-opacity-95 shadow-slate-500 drop-shadow shadow-sm hover:bg-slate-800 duration-150"
+                                    className="flex items-center cursor-pointer p-2 gap-3 mt-3 mx-auto w-[95%] rounded-xl bg-opacity-95 hover:shadow-slate-500 drop-shadow shadow-sm hover:bg-slate-700 duration-300"
                                     onClick={() => { conversationHandler(result) }}
                                 >
-                                    <div className="w-1/6 rounded-full flex flex-col justify-center">
-                                        <div className='curser-pointer w-full'>
-                                            <img
-                                                className='w-9 h-9 rounded-full'
-                                                src={!result.receiverInfo.DP ? UserIcon : result.receiverInfo.DP}
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="container flex flex-col w-4/6 text-left gap-1">
-                                        <h1 className='text-base font-bold'>
-                                            {result.receiverInfo.UserName}
-                                        </h1>
-                                        <div className='text-[12px] truncate'>
+                                    <div className="w-[36px] h-[36px] rounded-full flex flex-col justify-center items-center ">
+                                        <div className="w-[30px] h-[30px] curser-pointer">
                                             {
-                                                result.latestMessage
-                                                    ?
-                                                    !result.latestMessage.message
-                                                        ?
-                                                        !result.latestMessage.image
-                                                            ?
-                                                            !result.latestMessage.video
-                                                                ?
-                                                                'No Messages'
-                                                                :
-                                                                (
-                                                                    <div className='flex gap-1 '>
-                                                                        <span className='text-sm'><RiFolderVideoLine /></span>
-                                                                        Video
-                                                                    </div>
-                                                                )
-                                                            :
-                                                            (
-                                                                <div className='flex gap-1 '>
-                                                                    <span className='text-sm'><FaRegImage /></span>
-                                                                    Image
-                                                                </div>
-                                                            )
-                                                        :
-                                                        result.latestMessage.message
+                                                !result.receiverInfo.DP ?
+                                                    <FaUserCircle className="text-3xl" />
                                                     :
-                                                    'No Messages'
+                                                    <img
+                                                        className="w-[30px] h-[30px] rounded-full"
+                                                        src={!result.receiverInfo.DP ? UserIcon : result.receiverInfo.DP}
+                                                    />
                                             }
                                         </div>
                                     </div>
-                                    <div className="container flex flex-col w-1/6 text-right m-1 gap-1">
-                                        <h1 className='text-[11px]'>
+                                    <div className="container flex flex-col w-4/6 text-left gap-1">
+                                        <h1 className="text-base font-bold">
+                                            {result.receiverInfo.UserName}
+                                        </h1>
+                                        <div className="text-[12px] truncate">
+                                            {
+                                                // check if latestMessage exists || if not exists then show No Messages
+                                                result.latestMessage ? (
+                                                    {
+                                                        text: result.latestMessage.message,
+                                                        image: <div className="flex gap-1"><FaRegImage className="text-sm" /> Image</div>,
+                                                        video: <div className="flex gap-1"><RiFolderVideoLine className="text-sm" /> Video</div>,
+                                                        VoiceCall: "Voice Call"
+                                                    }[result.latestMessage.messageType] || "No Messages" // check messageType is "text || "image" || "video" || "VoiceCall" || if not in that comparing string then show No Messages
+                                                ) : "No Messages"
+                                            }
+                                        </div>
+                                    </div>
+                                    <div className="container flex justify-end w-full text-right bg-green-00 m-1 -mt-3 gap-1 ">
+                                        <h1 className="text-[11px]">
                                             {time && time}
                                         </h1>
                                     </div>

@@ -11,6 +11,11 @@ const messageSchema = mongoose.Schema({
         ref: "userRegisteredData",
         required: true,
     },
+    messageType: {
+        type: String,
+        enum: ["text", "image", "video", "VoiceCall"], // "audio", "file"
+        required: true,
+    },
     message: {
         type: String,
         trim: true,
@@ -34,6 +39,10 @@ const messageSchema = mongoose.Schema({
             validator: (value) => value.length >= 0,
             message: 'Message con not be empty',
         },]
+    },
+    call: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "callData",
     },
     unActiveIds: [
         {

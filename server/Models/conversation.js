@@ -15,6 +15,13 @@ const conversationSchema = new mongoose.Schema({
             default: [],
         }
     ],
+    calls: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "callData",
+            default: [],
+        }
+    ],
     latestMessage: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "messageData",

@@ -1,16 +1,15 @@
 import React, { useEffect, useRef, useState } from 'react'
 import UserIcon from 'C:/Users/Destiny/OneDrive/Desktop/MyChatUp/client/src/assets/profile.png';
-import { IoCallOutline } from "react-icons/io5";
-import { HiOutlineVideoCamera } from "react-icons/hi2";
+import { IoMdArrowBack } from "react-icons/io";
+import VoiceCall from './Calling/VoiceCall ';
 import { BsThreeDotsVertical } from "react-icons/bs";
-import { Link } from 'react-router-dom';
 import axios from 'axios';
-// import VoiceCall from './VoiceCall ';
+import API_URL from '../../../config';
 
-export default function ChatBoxHeader({ socket, userData, roomInfo, setRoomInfo, status, chats, setChats }) {
+export default function ChatBoxHeader({ socket, userData, roomInfo, setRoomInfo, setIsChat, status, chats, setChats, joined, setJoined, showPopup, setShowPopup, setCallerInfo }) {
     const userId = userData?._id;
     const receiverInfo = roomInfo?.receiverInfo;
-    const blockIds = roomInfo.blockedIds;
+    const blockIds = roomInfo?.blockedIds || [];
     const checkBlockStatus = () => {
         if (blockIds.length < 0) {
             return false;
@@ -45,6 +44,10 @@ export default function ChatBoxHeader({ socket, userData, roomInfo, setRoomInfo,
     const [clearFor, setClearFor] = useState(defaultClearFor);
     const [unActiveIds, setUnActiveIds] = useState([])
 
+    const handleGoBack = ()=>{
+        setIsChat(false);
+    }
+
     const handleThreeDots = () => {
         setIsThreeDots(!isThreeDots);
         setIsReport(false);
@@ -77,7 +80,7 @@ export default function ChatBoxHeader({ socket, userData, roomInfo, setRoomInfo,
     };
 
     const onSubmitBlock = () => {
-        axios.post('http://127.0.0.1:3002/block', { userId, roomInfo, blockedId: receiverInfo?._id })
+        axios.post(`${API_URL}/block`, { userId, roomInfo, blockedId: receiverInfo?._id })
             .then(result => {
                 console.log(result)
 
@@ -96,7 +99,7 @@ export default function ChatBoxHeader({ socket, userData, roomInfo, setRoomInfo,
             }));
         }
 
-        axios.post('http://127.0.0.1:3002/report', { userId, roomInfo, reportedId: receiverInfo._id, reportMessage: report.reportMessage })
+        axios.post(`${API_URL}/report`, { userId, roomInfo, reportedId: receiverInfo._id, reportMessage: report.reportMessage })
             .then(result => {
                 console.log(result)
                 setIsReport(false);
@@ -122,7 +125,7 @@ export default function ChatBoxHeader({ socket, userData, roomInfo, setRoomInfo,
     const onSubmitUnBlock = () => {
         console.log(roomInfo.conversation_id);
 
-        axios.post('http://127.0.0.1:3002/unblock', { userId, roomInfo, blockedId: receiverInfo?._id })
+        axios.post(`${API_URL}/unblock`, { userId, roomInfo, blockedId: receiverInfo?._id })
             .then(result => {
                 console.log(result)
                 socket.emit('unblock', { userId, roomInfo, blockedId: result.data.updatedConversation.blockedIds });
@@ -146,8 +149,8 @@ export default function ChatBoxHeader({ socket, userData, roomInfo, setRoomInfo,
         setUnActiveIds([userId, receiverInfo?._id]);
     }
     useEffect(() => {
-        setTimeout(() => {
-            axios.post('http://127.0.0.1:3002/clearChat', { userId, roomInfo, unActiveIds, chats })
+        if (isClearChat) {
+            axios.post(`${API_URL}/clearChat`, { userId, roomInfo, unActiveIds, chats })
                 .then(result => {
                     console.log(result)
                     socket.emit('clearChatEffect', { roomInfo, unActiveIds, clearFor })
@@ -157,7 +160,7 @@ export default function ChatBoxHeader({ socket, userData, roomInfo, setRoomInfo,
                     setUnActiveIds([]);
                 })
                 .catch(err => console.log(err))
-          }, 100);
+        }
 
     }, [clearFor])
 
@@ -215,11 +218,17 @@ export default function ChatBoxHeader({ socket, userData, roomInfo, setRoomInfo,
     }, [isThreeDots]);
 
     return (
-        <div className='w-full h-full flex justify-between' >
-            <div className="flex justify-start w-1/2 ">
-                <div className="cursor-pointer my-auto mx-2 text-xl">
+        <div className='relative w-full h-full flex justify-between text-white' >
+            <div className="flex justify-evenly sm:justify-start bg-green-00 sm:w-1/2 ">
+                <div
+                    onClick={handleGoBack}
+                    className="cursor-pointer sm:hidden my-auto mx-1 text-3xl"
+                >
+                    <IoMdArrowBack />
+                </div>
+                <div className="cursor-pointer my-auto mr-2">
                     <img
-                        className='w-8 h-8 rounded-full'
+                        className='w-10 sm:w-8 h-10 sm:h-8 rounded-full'
                         src={!receiverInfo.DP ? UserIcon : receiverInfo.DP}
                     />
                 </div>
@@ -240,17 +249,23 @@ export default function ChatBoxHeader({ socket, userData, roomInfo, setRoomInfo,
                     </div>
                 </div>
             </div>
-            <div className="relative flex justify-end w-1/2 ">
+            <div className=" flex justify-end sm:w-1/2 ">
                 <div
-                    className="cursor-pointer my-auto mx-2 text-2xl rounded-full bg-slate-800 border-[0.01px] border-slate-600 p-1 hover:bg-slate-950 hover:border-slate-500 duration-300"
+                    className="cursor-pointer my-auto mx-2 "
                 >
-                    {/* <VoiceCall channelName={roomInfo?.conversation_id}/> */}
-                    <IoCallOutline />
-                </div>
-                <div
-                    className="cursor-pointer my-auto mx-2 text-2xl rounded-full bg-slate-800 border-[0.01px] border-slate-600 p-1 hover:bg-slate-950 hover:border-slate-500 duration-300"
-                >
-                    <HiOutlineVideoCamera />
+                    <VoiceCall
+                        channelName={roomInfo?.conversation_id}
+                        socket={socket}
+                        userData={userData}
+                        roomInfo={roomInfo}
+                        receiverInfo={receiverInfo}
+                        receiverId={receiverInfo._id}
+                        joined={joined}
+                        setJoined={setJoined}
+                        showPopup={showPopup}
+                        setShowPopup={setShowPopup}
+                        setCallerInfo={setCallerInfo}
+                    />
                 </div>
                 <div
                     onClick={handleThreeDots}
@@ -261,12 +276,12 @@ export default function ChatBoxHeader({ socket, userData, roomInfo, setRoomInfo,
                 {isThreeDots && (
                     <div
                         ref={threeDotsRef}
-                        className="absolute z-10 flex mt-12 w-full right-2 gap-1"
+                        className="absolute z-10 flex mt-12 ml-11 w-full sm:w-[80%] lg:w-[60%] right-2 gap-1 bg-slate-900 shadow-slate-950 drop-shadow shadow-md"
                     >
                         {
                             isOverview && (
                                 isReport ? (
-                                    <ul className="Report flex flex-col justify-center gap-4 w-full p-3 mx-auto bg-slate-800 rounded-md shadow-slate-950 drop-shadow shadow-md">
+                                    <ul className="Report flex flex-col justify-center gap-4 w-full p-3 px-6 mx-auto bg-slate-800 rounded-md shadow-slate-950 drop-shadow shadow-md">
                                         <li className="w-full px-1">
                                             <h4 className="text-lg p-0 flex">
                                                 Report to&nbsp;
@@ -294,7 +309,6 @@ export default function ChatBoxHeader({ socket, userData, roomInfo, setRoomInfo,
                                                 className={`font-normal text-base bg-slate-950 mx-auto py-1 px-3 rounded-lg w-full outline-none drop-shadow shadow-sm hover:shadow-slate-300 border-2 border-solid border-slate-950 duration-300`}
                                             >
                                             </input>
-                                            {/* {inputValuesErr.UserName === true && <p className='text-red-600'>{inputValues.UserName === '' ? 'Enter Your User Name' : 'Your UserName is inValid'}</p>} */}
                                         </div>
                                         <li className='flex justify-center'>
                                             <button
@@ -354,7 +368,7 @@ export default function ChatBoxHeader({ socket, userData, roomInfo, setRoomInfo,
                                         </li>
                                     </ul>
                                 ) : (
-                                    <ul className="Overview flex flex-col justify-center gap-4 w-full p-3 mx-auto bg-slate-800 rounded-md shadow-slate-950 drop-shadow shadow-md">
+                                    <ul className="Overview flex flex-col justify-center gap-4 w-full p-3 px-6 mx-auto bg-slate-800 rounded-md shadow-slate-950 drop-shadow shadow-md">
                                         <li className="w-full flex flex-col justify-center mx-auto">
                                             <div className="mx-auto">
                                                 <img
@@ -368,13 +382,13 @@ export default function ChatBoxHeader({ socket, userData, roomInfo, setRoomInfo,
                                         </li>
                                         <li className="w-full p-0">
                                             <h4 className="text-sm p-0">About</h4>
-                                            <p className="text-base">{receiverInfo.About}</p>
+                                            <p className="text-base">{receiverInfo.About || "~"}</p>
                                         </li>
                                         <li className="w-full flex flex-col p-0">
                                             <h4 className="text-sm p-0">Phone Number</h4>
                                             <p className="text-base">+91 {receiverInfo.PhoneNo}</p>
                                         </li>
-                                        <li className="flex gap-1 justify-around">
+                                        <li className="flex justify-evenly gap-1">
                                             {
                                                 isBlocked ?
                                                     <button
@@ -437,7 +451,7 @@ export default function ChatBoxHeader({ socket, userData, roomInfo, setRoomInfo,
                                 </li>
                             </ul>
                         }
-                        <ul className="flex flex-col w-8/12 ">
+                        <ul className="flex flex-col w-6/12 bg-slate-900">
                             <div className='shadow-slate-950 drop-shadow shadow-md'>
                                 <li
                                     onClick={handleOverview}

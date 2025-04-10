@@ -1,12 +1,13 @@
-import axios from 'axios';
-import React, { useRef, useState } from 'react'
-import UserIcon from 'C:/Users/Destiny/OneDrive/Desktop/MyChatUp/client/src/assets/profile.png';
+import React, { useRef, useState } from "react"
+import UserIcon from "C:/Users/Destiny/OneDrive/Desktop/MyChatUp/client/src/assets/profile.png";
 import { FaUserCircle } from "react-icons/fa";
 import { FaEdit } from "react-icons/fa";
 import { FaPen } from "react-icons/fa";
-import { Link, useNavigate } from 'react-router-dom';
-import { ToastContainer, toast } from 'react-toastify';
-// import { useStyleSheetContext } from 'styled-components/dist/models/StyleSheetManager';
+import { Link, useNavigate } from "react-router-dom";
+import { ToastContainer, toast } from "react-toastify";
+import axios from "axios";
+import API_URL from "../../config";
+// import { useStyleSheetContext } from "styled-components/dist/models/StyleSheetManager";
 
 
 function Profile() {
@@ -43,7 +44,7 @@ function Profile() {
       convertToBase64(file)
         .then(base64Image => {
           setSelectedImage(base64Image);
-          axios.post('http://127.0.0.1:3002/uploadDp', { selectedImage: base64Image, userData })
+          axios.post(`${API_URL}/uploadDp`, { selectedImage: base64Image, userData })
             .then(result => {
               console.log(result);
 
@@ -69,9 +70,9 @@ function Profile() {
   return (
     <div className="container mx-auto mt-2 h-[5.4in] w-full">
       <div>
-        <ToastContainer
+        {/* <ToastContainer
           stacked
-          position="top-center"
+          position="top-right"
           autoClose={1000}
           // hideProgressBar
           newestOnTop={false}
@@ -79,11 +80,12 @@ function Profile() {
           pauseOnFocusLoss={false}
           draggable
           pauseOnHover
-          theme="colored" />
+          theme="colored"
+        /> */}
       </div>
       <div className="container flex flex-col text-center items-center mx-auto p-1">
         <div className="container flex mb-3 pl-2 ">
-          <h1 className='text-lg font-bold ml-2'>
+          <h1 className="text-lg font-bold ml-2">
             Profile
           </h1>
         </div>
@@ -97,17 +99,17 @@ function Profile() {
           >
             {
               !userData?.DP ?
-              <img
+                <img
                   src={UserIcon}
-                  className='h-[7rem] w-[7rem] resize object-cover rounded-full transition-opacity hover:opacity-30 duration-200'
+                  className="h-[7rem] w-[7rem] resize object-cover rounded-full transition-opacity hover:opacity-30 duration-200"
                 />
                 :
                 <img
                   src={userData.DP}
-                  className='h-[7rem] w-[7rem] resize object-cover rounded-full transition-opacity hover:opacity-60 duration-200'
+                  className="h-[7rem] w-[7rem] resize object-cover rounded-full transition-opacity hover:opacity-60 duration-200"
                 />
             }
-            <div className='absolute Image-Input-Button top-12 left-12' onClick={(e) => e.stopPropagation()}>
+            <div className="absolute Image-Input-Button top-12 left-12" onClick={(e) => e.stopPropagation()}>
               <input
                 type="file"
                 accept="image/jpeg, image/png"
@@ -116,62 +118,65 @@ function Profile() {
                 hidden
               />
               <div
-                className={`text-sm text-white rounded-sm ${!isHovered && 'hidden'} duration-300`}
+                className={`text-sm text-white rounded-sm ${!isHovered && "hidden"} duration-300`}
               >
                 <FaPen />
               </div>
             </div>
           </div>
         </div>
+
         <div className="container User-Name m-2 w-full ">
-          <div onClick={handleEditDp} className='container text-lg font-bold'>
+          <div onClick={handleEditDp} className="container text-lg sm:text-base lg:text-lg font-bold">
             Hello, {userData.UserName}
           </div>
         </div>
+
         <div className="container Phone NUmber m-2 w-full ">
-          <div className="container text-sm select-none">
+          <div className="container text-sm sm:text-xs lg:text-sm select-none">
             Mobile No.
           </div>
-          <div className='container text-lg font-bold'>
+          <div className="container text-lg sm:text-base lg:text-lg font-bold">
             {userData.PhoneNo}
-
           </div>
         </div>
+
         <div className="container Email ID m-2 w-full ">
-          <div className="container text-sm select-none">
+          <div className="container text-sm sm:text-xs lg:text-sm select-none">
             Email ID
           </div>
-          <div className='container text-lg font-bold'>
+          <div className="container overflow- text-lg sm:text-base lg:text-lg break-words font-bold">
             {userData.EmailID}
           </div>
         </div>
+
         <div className="container Email ID m-2 w-full ">
-          <div className="container text-sm select-none">
+          <div className="container text-sm sm:text-xs lg:text-sm select-none">
             About
           </div>
-          <div className='container text-lg font-bold'>
+          <div className="container text-lg sm:text-base lg:text-lg font-bold">
             {userData.About}
           </div>
         </div>
       </div>
-      <div className="container flex justify-around">
+
+      <div className="container flex justify-between px-6 sm:px-4">
         <button
-          type='submit'
+          type="submit"
           onClick={logOutHandle}
-          className='text-base font-bold text-red-200  bg-blue-800 hover:text-white hover:bg-blue-700 my-1 mr-14 p-1 px-2 rounded-xl duration-300'
+          className="text-base font-bold text-red-200  bg-blue-800 hover:text-white hover:bg-blue-700 my-1 p-1 px-2 rounded-xl duration-300"
         >
           Logout
-
         </button>
         <Link to="/DashBoard/editProfile">
           <button
-            type='submit'
-            className='text-xl font-bold text-slate-300 bg-blue-800 hover:bg-blue-700 my-1 ml-14 p-2 rounded-xl duration-300'
+            className="text-xl font-bold text-slate-300 bg-blue-800 hover:bg-blue-700 my-1 p-2 rounded-xl duration-300"
           >
             <FaEdit />
           </button>
         </Link>
       </div>
+
     </div>
   )
 }
