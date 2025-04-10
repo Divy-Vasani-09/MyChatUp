@@ -4,6 +4,7 @@ import { Outlet, useSearchParams } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 import ChatBox from "./DashBoardComponent/ChatComponents/ChatBox";
 import CallBox from "./DashBoardComponent/callComponents/callBox";
+import { useNavigate } from "react-router-dom";
 import socketClient from "socket.io-client";
 import AgoraRTC from "agora-rtc-sdk-ng";
 import axios from "axios";
@@ -12,6 +13,14 @@ import API_URL, { SOCKET_URL } from "../config";
 export default function DashBoard() {
   const userData = JSON.parse(sessionStorage.getItem("userLoggedData"));
   const userId = userData?._id;
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if(!userId){
+      navigate("/login"); 
+      alert("You have to Login first!");
+    }
+  }, []);
 
   const [conversationList, setConversationList] = useState([]);
   const [isChat, setIsChat] = useState(false);
@@ -45,7 +54,7 @@ export default function DashBoard() {
     // const newSocket = socketClient("http://localhost:3002", {
     const newSocket = socketClient(SOCKET_URL, {
       transports: ["websocket"],
-      query: { userId: userData._id },
+      query: { userId: userData?._id },
       reconnection: true,    // This is true by default
       reconnectionAttempts: 5,    // This is Infinity by default 
       reconnectionDelay: 2000,    // This is 1s=1000 by default
